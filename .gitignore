@@ -51,6 +51,10 @@ backend/env/.env.dev
 backend/env/.env.prod
 backend/env/.env.test
 
+# nuitka 编译后的二进制文件
+backend/main.bin
+backend/main.sh
+
 docker/.env
 docker/nginx/app/dist
 docker/nginx/docs/dist
@@ -58,15 +62,14 @@ docker/nginx/web/dist
 docker/nginx/ssl/*
 !docker/nginx/ssl/.gitkeep
 
-frontend/web/.env
 frontend/web/.env.development
 frontend/web/.env.production
 
+frontend/app/.env.development
+frontend/app/.env.production
+
 # frontend/docs/*
 !frontend/docs/.gitkeep
-
-# frontend/app/*
-!frontend/app/.gitkeep
 
 .plan
 CLAUDE.md
