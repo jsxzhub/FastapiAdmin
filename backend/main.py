@@ -40,6 +40,10 @@ def run(
         host=settings.SERVER_HOST,
         port=settings.SERVER_PORT,
         reload=settings.DEBUG,
+        # 只监听代码目录，避免把 logs/ 纳入热重载监听：
+        # 日志文件写在 logs/fastapiadmin.log，而 watchfiles 的 "change detected" 调试日志
+        # 又会经 InterceptHandler 写回同一个文件，形成自我激励的死循环
+        reload_dirs=["app"] if settings.DEBUG else None,
         workers=settings.WORKERS,
         log_config=None,
         timeout_graceful_shutdown=5,
