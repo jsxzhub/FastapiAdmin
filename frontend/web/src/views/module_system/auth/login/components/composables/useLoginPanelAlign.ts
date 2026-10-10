@@ -12,8 +12,8 @@ function readInitial(): LoginPanelAlign {
   } catch {
     /* ignore */
   }
-  /** 默认：插画在左、表单在右 */
-  return "right";
+  /** 默认：登录卡片居中悬浮 */
+  return "center";
 }
 
 /**

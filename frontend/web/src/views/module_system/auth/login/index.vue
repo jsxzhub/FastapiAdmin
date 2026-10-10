@@ -42,59 +42,27 @@
                       <p class="sub-title">{{ panelSubTitle }}</p>
                     </div>
 
-                    <template v-if="authPanel === 'login'">
-                      <template v-if="loginFlowMode === 'account'">
-                        <FaLoginAccountForm
-                          ref="accountFormRef"
-                          v-model:is-passing="isPassing"
-                          v-model:is-click-pass="isClickPass"
-                          v-model:login-form="loginForm"
-                          :rules="rules"
-                          :captcha-state="captchaState"
-                          :code-loading="codeLoading"
-                          :demo-account-key="demoAccountKey"
-                          :accounts="accounts"
-                          :form-key="formKey"
-                          :is-dark="isDark"
-                          :drag-verify-text-color="dragVerifyTextColor"
-                          :loading="loading"
-                          @submit="handleSubmit"
-                          @setup-account="setupAccount"
-                          @get-captcha="getCaptcha"
-                          @open-mobile="openMobileLogin"
-                          @open-qr="openQrLogin"
-                          @forget="setAuthPanel('forget')"
-                          @register="setAuthPanel('register')"
-                          @oauth="handleOAuthLogin"
-                          @slider-pass="handleSliderPass"
-                          @request-puzzle="handlePuzzleRequest"
-                        />
-                      </template>
-
-                      <FaLoginMobilePanel
-                        v-else-if="loginFlowMode === 'mobile'"
-                        @back="backToAccountLogin"
-                        @register="setAuthPanel('register')"
-                      />
-
-                      <FaLoginQrPanel
-                        v-else-if="loginFlowMode === 'qr'"
-                        @back="backToAccountLogin"
-                        @register="setAuthPanel('register')"
-                      />
-                    </template>
-
-                    <FaLoginRegisterPanel
-                      v-else-if="authPanel === 'register'"
-                      ref="registerPanelRef"
-                      v-model:register-agreement-read="registerAgreementRead"
-                      v-model:register-form="registerForm"
-                      :register-rules="registerRules"
+                    <FaLoginAccountForm
+                      v-if="authPanel === 'login'"
+                      ref="accountFormRef"
+                      v-model:is-passing="isPassing"
+                      v-model:is-click-pass="isClickPass"
+                      v-model:login-form="loginForm"
+                      :rules="rules"
+                      :captcha-state="captchaState"
+                      :code-loading="codeLoading"
+                      :demo-account-key="demoAccountKey"
+                      :accounts="accounts"
                       :form-key="formKey"
-                      :register-loading="registerLoading"
-                      :user-agreement-href="userAgreementHref"
-                      @submit="submitRegister"
-                      @to-login="setAuthPanel('login')"
+                      :is-dark="isDark"
+                      :drag-verify-text-color="dragVerifyTextColor"
+                      :loading="loading"
+                      @submit="handleSubmit"
+                      @setup-account="setupAccount"
+                      @get-captcha="getCaptcha"
+                      @forget="setAuthPanel('forget')"
+                      @slider-pass="handleSliderPass"
+                      @request-puzzle="handlePuzzleRequest"
                     />
 
                     <FaLoginForgetPanel
@@ -178,29 +146,21 @@
 
 <script setup lang="ts">
 import type { LocationQuery, RouteLocationRaw } from "vue-router";
-import AuthAPI, {
-  type CaptchaInfo,
-  type LoginFormData,
-  type OAuthProvider,
-} from "@/api/module_system/auth";
+import AuthAPI, { type CaptchaInfo, type LoginFormData } from "@/api/module_system/auth";
 
-import UserAPI, { type ForgetPasswordForm, type RegisterForm } from "@/api/module_system/user";
+import UserAPI, { type ForgetPasswordForm } from "@/api/module_system/user";
 import { useConfigStore, useAppStore, useSettingsStore, useUserStore } from "@stores";
-import { Auth, HttpError, startOAuthLogin } from "@utils";
-import { ElMessage } from "element-plus";
+import { Auth, HttpError } from "@utils";
+import { ElMessage, ElNotification } from "element-plus";
 import type { FormRules } from "element-plus";
 import type { Account, AccountKey } from "./types";
 import { useLoginPanelAlign } from "./components/composables/useLoginPanelAlign";
 import type FaLoginAccountForm from "./components/forms/FaLoginAccountForm.vue";
-import type FaLoginRegisterPanel from "./components/panels/FaLoginRegisterPanel.vue";
 import type FaLoginForgetPanel from "./components/panels/FaLoginForgetPanel.vue";
 
 defineOptions({ name: "Login" });
 
-type AuthPanel = "login" | "register" | "forget";
-
-/** 登录区内：账号密码 ↔ 手机号 ↔ 扫码（扫码 / 手机号为演示交互） */
-type LoginFlowMode = "account" | "mobile" | "qr";
+type AuthPanel = "login" | "forget";
 
 const configStore = useConfigStore();
 const settingStore = useSettingsStore();
@@ -211,65 +171,23 @@ const { t, locale } = useI18n();
 const { panelAlign } = useLoginPanelAlign();
 
 const authPanel = ref<AuthPanel>("login");
-const loginFlowMode = ref<LoginFlowMode>("account");
 
 const panelTitle = computed(() => {
   if (authPanel.value === "forget") return t("login.resetPassword");
-  if (
-    authPanel.value === "login" &&
-    (loginFlowMode.value === "mobile" || loginFlowMode.value === "qr")
-  ) {
-    return t("login.qrLoginTitle");
-  }
   return t("login.title");
 });
 
 const panelSubTitle = computed(() => {
-  if (authPanel.value === "register") return t("register.subTitle");
   if (authPanel.value === "forget") return t("forgetPassword.subTitle");
-  if (authPanel.value === "login" && loginFlowMode.value === "mobile") {
-    return t("login.mobileLoginSubTitle");
-  }
-  if (authPanel.value === "login" && loginFlowMode.value === "qr") {
-    return t("login.qrLoginSubTitle");
-  }
   return t("login.subTitle");
 });
 
-const userAgreementHref = computed(() => configStore.configData?.clause?.config_value || "");
-
 function setAuthPanel(panel: AuthPanel) {
   authPanel.value = panel;
-  if (panel !== "login") {
-    loginFlowMode.value = "account";
-  }
   nextTick(() => {
     accountFormRef.value?.clearValidate?.();
-    registerPanelRef.value?.clearValidate?.();
     forgetPanelRef.value?.clearValidate?.();
   });
-}
-
-function openMobileLogin() {
-  loginFlowMode.value = "mobile";
-}
-
-function openQrLogin() {
-  loginFlowMode.value = "qr";
-}
-
-function backToAccountLogin() {
-  loginFlowMode.value = "account";
-  nextTick(() => {
-    getCaptcha();
-    accountFormRef.value?.resetDragVerify?.();
-    isPassing.value = false;
-    isClickPass.value = false;
-  });
-}
-
-function handleOAuthLogin(provider: OAuthProvider) {
-  startOAuthLogin(provider);
 }
 
 async function tryConsumeOAuthCallback() {
@@ -325,7 +243,6 @@ watch(locale, () => {
 
 watch(authPanel, (panel) => {
   if (panel !== "login") return;
-  if (loginFlowMode.value !== "account") return;
   getCaptcha();
   accountFormRef.value?.resetDragVerify?.();
   isPassing.value = false;
@@ -364,63 +281,15 @@ const isPassing = ref(false);
 const isClickPass = ref(false);
 
 const accountFormRef = ref<InstanceType<typeof FaLoginAccountForm> | null>(null);
-const registerPanelRef = ref<InstanceType<typeof FaLoginRegisterPanel> | null>(null);
 const forgetPanelRef = ref<InstanceType<typeof FaLoginForgetPanel> | null>(null);
 
 const loading = ref(false);
-const registerLoading = ref(false);
 const forgetLoading = ref(false);
 const codeLoading = ref(false);
-
-const registerAgreementRead = ref(false);
-
-const registerForm = reactive<RegisterForm>({
-  username: "",
-  name: "",
-  password: "",
-  confirmPassword: "",
-});
 
 const forgetForm = reactive<ForgetPasswordForm>({
   username: "",
 });
-
-const validateRegisterPassword = (_rule: unknown, value: string, callback: (e?: Error) => void) => {
-  if (!value) {
-    callback(new Error(t("login.message.password.required")));
-    return;
-  }
-  if (registerForm.confirmPassword) {
-    registerPanelRef.value?.validateField?.("confirmPassword");
-  }
-  callback();
-};
-
-const validateRegisterConfirm = (_rule: unknown, value: string, callback: (e?: Error) => void) => {
-  if (!value) {
-    callback(new Error(t("login.message.password.required")));
-    return;
-  }
-  if (value !== registerForm.password) {
-    callback(new Error(t("login.message.password.inconformity")));
-    return;
-  }
-  callback();
-};
-
-const registerRules = computed<FormRules<RegisterForm>>(() => ({
-  username: [{ required: true, message: t("login.message.username.required"), trigger: "blur" }],
-  name: [{ required: true, message: "请输入昵称", trigger: "blur" }],
-  password: [
-    { required: true, validator: validateRegisterPassword, trigger: "blur" },
-    { min: 6, message: t("login.message.password.min"), trigger: "blur" },
-  ],
-  confirmPassword: [
-    { required: true, message: t("login.message.password.required"), trigger: "blur" },
-    { min: 6, message: t("login.message.password.min"), trigger: "blur" },
-    { validator: validateRegisterConfirm, trigger: "blur" },
-  ],
-}));
 
 const forgetRules = computed<FormRules<ForgetPasswordForm>>(() => ({
   username: [{ required: true, message: t("login.message.username.required"), trigger: "blur" }],
@@ -556,14 +425,14 @@ onMounted(async () => {
 });
 
 onActivated(() => {
-  if (authPanel.value !== "login" || loginFlowMode.value !== "account") return;
+  if (authPanel.value !== "login") return;
   getCaptcha();
 });
 
 watch(
   () => route.fullPath,
   () => {
-    if (authPanel.value !== "login" || loginFlowMode.value !== "account") return;
+    if (authPanel.value !== "login") return;
     getCaptcha();
   }
 );
@@ -604,33 +473,6 @@ const handleSubmit = async () => {
     loading.value = false;
   }
 };
-
-async function submitRegister() {
-  if (!registerAgreementRead.value) {
-    ElMessage.warning(t("login.message.agree.required"));
-    return;
-  }
-  if (!registerPanelRef.value) return;
-  try {
-    await registerPanelRef.value.validate?.();
-    registerLoading.value = true;
-    await UserAPI.register(registerForm);
-    // 注册成功后自动填充登录表单并提交
-    loginForm.username = registerForm.username;
-    loginForm.password = registerForm.password;
-    registerForm.username = "";
-    registerForm.password = "";
-    registerForm.confirmPassword = "";
-    registerForm.name = "";
-    registerAgreementRead.value = false;
-    setAuthPanel("login");
-    await handleSubmit();
-  } catch (error) {
-    console.error("[Login] register:", error);
-  } finally {
-    registerLoading.value = false;
-  }
-}
 
 async function submitForget() {
   if (!forgetPanelRef.value) return;
