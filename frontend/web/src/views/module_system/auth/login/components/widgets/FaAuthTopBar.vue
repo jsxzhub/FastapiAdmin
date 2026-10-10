@@ -4,16 +4,9 @@
     class="auth-top-bar pointer-events-none fixed left-0 right-0 top-0 z-100 flex items-center justify-between gap-3 bg-transparent px-5 py-4.5 md:gap-4 md:px-10"
   >
     <div class="pointer-events-auto flex min-w-0 flex-1 items-center gap-3">
-      <FaLogo class="icon shrink-0" size="46" :src="webLogoSrc" />
+      <FaLogo class="icon shrink-0" size="120" :src="webLogoSrc" />
       <div class="min-w-0 flex-1">
-        <div class="flex flex-wrap items-center gap-2">
-          <h1 class="auth-top-bar__site-title">{{ siteTitle }}</h1>
-          <ElTooltip :content="displayVersion" placement="bottom">
-            <div class="logo-version-badge shrink-0">
-              <span class="logo-version-pill">{{ displayVersion }}</span>
-            </div>
-          </ElTooltip>
-        </div>
+        <h1 class="auth-top-bar__site-title">{{ siteTitle }}</h1>
       </div>
     </div>
 
@@ -124,8 +117,6 @@ import { LoginPanelAlign } from "../composables/useLoginPanelAlign";
 
 defineOptions({ name: "AuthTopBar" });
 
-const DEFAULT_APP_VERSION = "3.0.0";
-
 interface Props {
   /** 登录区表单水平对齐；未传入时不展示布局切换 */
   panelAlign?: LoginPanelAlign | null;
@@ -180,12 +171,6 @@ const siteTitle = computed(
   () => configStore.configData.sys_name?.config_value?.trim() || AppConfig.systemInfo.name
 );
 
-const displayVersion = computed(() => {
-  const raw = configStore.configData.version?.config_value?.trim();
-  const ver = raw || DEFAULT_APP_VERSION;
-  return ver.startsWith("v") || ver.startsWith("V") ? ver : `v${ver}`;
-});
-
 const changeLanguage = (lang: LanguageEnum) => {
   if (locale.value === lang) return;
   locale.value = lang;
@@ -211,20 +196,6 @@ const changeThemeColor = (color: string) => {
   color: var(--el-text-color-primary);
   letter-spacing: -0.02em;
   white-space: nowrap;
-}
-
-.logo-version-pill {
-  display: inline-block;
-  padding: 0.28rem 0.6rem;
-  font-size: 11px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.15;
-  color: var(--el-color-primary);
-  letter-spacing: 0.02em;
-  background: color-mix(in srgb, var(--el-color-primary) 11%, transparent);
-  border: 1px solid color-mix(in srgb, var(--el-color-primary) 28%, transparent);
-  border-radius: 999px;
 }
 
 /* 右上角操作的整体衬底 */
