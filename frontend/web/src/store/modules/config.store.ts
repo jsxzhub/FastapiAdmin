@@ -63,10 +63,10 @@ export const useConfigStore = defineStore(
       }
       configLoading.value = true;
       try {
-        // 强制刷新时先清空
-        if (force) {
-          configData.value = {};
-        }
+        // 注意：不要在请求前清空 configData。
+        // 清空会让依赖它的位置（顶栏/侧栏 logo、系统名称、登录页背景等）
+        // 在接口返回前回退到内置默认值，出现「先闪一下旧 logo」的现象。
+        // 新数据由 applyConfigList 一次性整体替换。
 
         // 获取系统级配置（演示模式、IP黑白名单等）
         const response = await ParamsAPI.getInitConfig();
@@ -84,11 +84,15 @@ export const useConfigStore = defineStore(
     }
 
     function applyConfigList(list: ConfigTable[]) {
+      const next: Record<string, ConfigTable> = {};
       list.forEach((item: ConfigTable) => {
         if (item.config_value !== undefined && item.config_key) {
-          configData.value[item.config_key] = item;
+          next[item.config_key] = item;
         }
       });
+      // 整体替换：既不出现「空配置」中间态（避免 logo 闪烁），
+      // 也能正确丢弃后端已删除的参数
+      configData.value = next;
       isConfigLoaded.value = true;
       _lastFetchedAt = Date.now();
     }

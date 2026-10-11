@@ -66,8 +66,8 @@ export const SETTING_DEFAULT_CONFIG = {
   layout: LayoutMode.LEFT,
   /** 主题模式 */
   theme: prefersDark ? ThemeMode.DARK : ThemeMode.LIGHT,
-  /** 组件大小 */
-  size: ComponentSize.DEFAULT,
+  /** 组件大小（紧凑） */
+  size: ComponentSize.SMALL,
   /** 语言 */
   language: LanguageEnum.ZH,
   /** 主题颜色 */

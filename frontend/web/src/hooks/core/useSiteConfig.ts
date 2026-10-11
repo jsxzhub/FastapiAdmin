@@ -46,9 +46,9 @@ export function useSiteConfig() {
 
   /** 配置更新后自动同步（管理员后台修改配置后重新拉取时） */
   watch(
-    () => configStore.configData,
+    () => [configStore.configData.sys_name, configStore.configData.favicon],
     () => applyConfig(),
-    { deep: false }
+    { deep: true }
   );
 
   return { initSiteConfig };

@@ -51,11 +51,6 @@
           @click="reload"
         />
 
-        <!-- 快速入口 -->
-        <FaFastEnter v-if="shouldShowFastEnter && width >= headerBarFastEnterMinWidth">
-          <FaIconButton icon="ri:function-line" class="ml-3" />
-        </FaFastEnter>
-
         <!-- 面包屑 -->
         <FaBreadcrumb
           v-if="(shouldShowBreadcrumb && isLeftMenu) || (shouldShowBreadcrumb && isDualMenu)"
@@ -235,7 +230,6 @@ const headerSystemName = computed(() => {
 const {
   shouldShowMenuButton,
   shouldShowRefreshButton,
-  shouldShowFastEnter,
   shouldShowBreadcrumb,
   shouldShowGlobalSearch,
   shouldShowFullscreen,
@@ -244,7 +238,6 @@ const {
   shouldShowSettings,
   shouldShowThemeToggle,
   shouldShowSizeSelect,
-  fastEnterMinWidth: headerBarFastEnterMinWidth,
 } = useHeaderBar();
 
 const { menuOpen, systemThemeColor, showSettingGuide, menuType, isDark, tabStyle, showAppLogo } =
