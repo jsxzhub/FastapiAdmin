@@ -47,6 +47,37 @@
           console.warn("Failed to apply initial theme:", e);
         }
       })();
+
+      /**
+       * 在 Vue 挂载前用本地缓存的系统名称替换静态标题。
+       *
+       * 标题的静态值是构建期写入的 %VITE_APP_TITLE%，JS 加载完成前标签页会一直显示它，
+       * 刷新时表现为「先闪一下默认名」。此处直接从 localStorage 读取后台「系统参数」
+       * 里的 sys_name（configStore 持久化 key "config"）提前覆盖，避免闪烁。
+       *
+       * key "config" 须与 config.store 的 persist.key 保持一致。
+       */
+      (function () {
+        try {
+          if (typeof Storage === "undefined" || !window.localStorage) {
+            return;
+          }
+
+          const raw = localStorage.getItem("config");
+          if (!raw) return;
+
+          const parsed = JSON.parse(raw);
+          // 兼容 pinia-plugin-persistedstate 的两种序列化结构
+          const configData = parsed?.configData || parsed?.state?.configData;
+          const name = configData?.sys_name?.config_value;
+
+          if (typeof name === "string" && name.trim()) {
+            document.title = name.trim();
+          }
+        } catch (e) {
+          console.warn("Failed to apply initial title:", e);
+        }
+      })();
     </script>
   </head>
 

@@ -41,8 +41,8 @@ export const useAppStore = defineStore(
       device.value = w < MOBILE_BREAKPOINT ? DeviceEnum.MOBILE : DeviceEnum.DESKTOP;
     });
 
-    /** 布局大小 */
-    const size = ref<string>("default");
+    /** 布局大小（默认紧凑：small） */
+    const size = ref<string>("small");
 
     /** 语言 */
     const language = ref<string>("zh");

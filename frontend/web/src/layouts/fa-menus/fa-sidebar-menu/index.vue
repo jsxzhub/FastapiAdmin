@@ -11,9 +11,15 @@
       class="dual-menu-left"
       :style="{ width: dualMenuShowText ? '80px' : '64px', background: getMenuTheme.background }"
     >
-      <FaLogo v-if="showAppLogo" class="logo" :src="sidebarLogoSrc" @click="navigateToHome" />
+      <FaLogo
+        v-if="showAppLogo"
+        class="logo"
+        :size="80"
+        :src="sidebarLogoSrc"
+        @click="navigateToHome"
+      />
 
-      <ElScrollbar :style="{ height: 'calc(100% - 135px)' }">
+      <ElScrollbar :style="{ height: 'calc(100% - 179px)' }">
         <ul>
           <li v-for="menu in firstLevelMenus" :key="menu.path" @click="handleMenuJump(menu, true)">
             <ElTooltip
@@ -75,7 +81,7 @@
           background: getMenuTheme.background,
         }"
       >
-        <FaLogo v-if="!isDualMenu" class="logo" :src="sidebarLogoSrc" />
+        <FaLogo v-if="!isDualMenu" class="logo" :size="80" :src="sidebarLogoSrc" />
 
         <p
           :class="{ 'is-dual-menu-name': isDualMenu }"
@@ -235,7 +241,7 @@ const scrollbarStyle = computed(() => {
   const isCollapsed = isDualMenu.value && !menuOpen.value;
   return {
     transform: isCollapsed ? "translateY(-50px)" : "translateY(0)",
-    height: isCollapsed ? "calc(100% + 50px)" : "calc(100% - 60px)",
+    height: isCollapsed ? "calc(100% + 50px)" : "calc(100% - 80px)",
     transition: "transform 0.3s ease",
   };
 });
@@ -513,9 +519,9 @@ watch(menuOpen, (isMenuOpen: boolean) => {
     display: flex;
     align-items: center;
     width: 100%;
-    height: 60px;
+    height: 80px;
     overflow: hidden;
-    line-height: 60px;
+    line-height: 80px;
     cursor: pointer;
 
     .logo {
@@ -526,7 +532,7 @@ watch(menuOpen, (isMenuOpen: boolean) => {
       position: absolute;
       top: 0;
       bottom: 0;
-      left: 58px;
+      left: 102px;
       box-sizing: border-box;
       margin-left: 10px;
       font-size: 18px;
@@ -564,6 +570,12 @@ watch(menuOpen, (isMenuOpen: boolean) => {
     .header {
       height: 50px;
       line-height: 50px;
+
+      /* 小屏 header 仅 50px 高，Logo 需缩放以免被裁切 */
+      .logo :deep(img) {
+        width: 44px !important;
+        height: 44px !important;
+      }
     }
 
     .el-menu {
@@ -732,6 +744,12 @@ $popup-menu-radius: 6px;
     .header {
       .logo {
         margin: 0 auto;
+
+        /* 折叠态侧栏仅 64px 宽，Logo 需缩放以免被裁切 */
+        :deep(img) {
+          width: 44px !important;
+          height: 44px !important;
+        }
       }
     }
   }

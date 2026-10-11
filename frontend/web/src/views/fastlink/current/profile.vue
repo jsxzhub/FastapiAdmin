@@ -5,13 +5,7 @@
       <!-- 左侧卡片 -->
       <div class="w-md mr-5 max-md:w-full max-md:mr-0">
         <div class="fa-card-sm relative p-9 pb-6 overflow-hidden text-center">
-          <img
-            class="absolute top-0 left-0 w-full h-50 object-cover"
-            src="@imgs/user/bg.webp"
-            alt=""
-          />
-
-          <div class="relative z-10 mt-30 mx-auto">
+          <div class="relative z-10 mt-0 mx-auto">
             <div class="relative inline-block">
               <img
                 v-if="infoFormState.avatar && !avatarLoadFailed"
@@ -113,14 +107,6 @@
           <div v-if="hasThirdPartyBindings" class="relative z-10 mt-10">
             <h3 class="text-sm font-medium">第三方账号</h3>
             <div class="flex flex-wrap justify-center mt-3.5 gap-3">
-              <div v-if="infoFormState.github_login" class="flex items-center text-xs text-g-600">
-                <FaSvgIcon icon="ri:github-fill" class="mr-1" />
-                {{ infoFormState.github_login }}
-              </div>
-              <div v-if="infoFormState.gitee_login" class="flex items-center text-xs text-g-600">
-                <FaSvgIcon icon="ri:gitee-fill" class="mr-1" />
-                {{ infoFormState.gitee_login }}
-              </div>
               <div v-if="infoFormState.wx_login" class="flex items-center text-xs text-g-600">
                 <FaSvgIcon icon="ri:wechat-fill" class="mr-1" />
                 {{ infoFormState.wx_login }}
@@ -422,15 +408,7 @@ async function fetchCurrentSessions() {
   }
 }
 
-const hasThirdPartyBindings = computed(
-  () =>
-    !!(
-      infoFormState.github_login ||
-      infoFormState.gitee_login ||
-      infoFormState.wx_login ||
-      infoFormState.qq_login
-    )
-);
+const hasThirdPartyBindings = computed(() => !!(infoFormState.wx_login || infoFormState.qq_login));
 
 function formatDate(dateStr: string | undefined): string {
   if (!dateStr) return "—";
@@ -454,8 +432,6 @@ const infoFormState = reactive<InfoFormState>({
   updated_time: undefined,
   description: undefined,
   status: undefined,
-  github_login: undefined,
-  gitee_login: undefined,
   wx_login: undefined,
   qq_login: undefined,
 });
@@ -507,10 +483,10 @@ async function onAvatarCropConfirm(dataURL: string) {
 
     if (response.data.code === 0 && response.data.data) {
       const fileUrl = response.data.data.file_url;
-      updateAvatar(fileUrl);
+      await updateAvatar(fileUrl);
       uploadRef.value?.clearFiles();
       fileList.value = [];
-      ElMessage.success("头像已更新，请保存基本设置以同步资料（如需）");
+      ElMessage.success("头像已更新");
       avatarCropVisible.value = false;
     } else {
       ElMessage.error(response.data.msg || "上传失败");
@@ -648,11 +624,11 @@ const handleUpload = async (options: UploadRequestOptions) => {
 
     if (response.data.code === 0 && response.data.data) {
       const fileUrl = response.data.data.file_url;
-      updateAvatar(fileUrl);
+      await updateAvatar(fileUrl);
       options.onSuccess(response);
       uploadRef.value?.clearFiles();
       fileList.value = [];
-      ElMessage.success("头像已更新，请保存基本设置以同步资料（如需）");
+      ElMessage.success("头像已更新");
     } else {
       const errorMsg = response.data.msg || "上传失败";
       ElMessage.error(errorMsg);
@@ -701,11 +677,26 @@ const handleAvatarFileChange = (file: UploadFile) => {
   fileList.value = [];
 };
 
-const updateAvatar = (fileUrl: string) => {
-  if (fileUrl) {
-    infoFormState.avatar = fileUrl.trim();
-  } else {
+/**
+ * 更新头像：本地预览 + 立即持久化。
+ *
+ * 顶栏、AI 侧栏等位置读取的是 userStore，而不是本页表单，
+ * 因此上传成功后必须马上写回后端并同步 userStore，不能等用户再点“保存”。
+ */
+const updateAvatar = async (fileUrl: string) => {
+  const url = fileUrl?.trim();
+  if (!url) {
     ElMessage.error("无效的头像URL");
+    return;
+  }
+  infoFormState.avatar = url;
+  try {
+    const response = await UserAPI.updateCurrentUserInfo({ avatar: url });
+    // 只用 setAvatar 合并头像字段，避免精简响应覆盖 roles/menus 等
+    userStore.setAvatar(response.data.data?.avatar?.trim() || url);
+  } catch (e) {
+    console.error(e);
+    ElMessage.error("头像保存失败，请重试");
   }
 };
 
@@ -733,12 +724,13 @@ const handleSave = async () => {
       avatar: infoFormState.avatar,
       description: infoFormState.description,
     });
-    await userStore.setUserInfo(response.data.data);
+    userStore.setUserInfo(response.data.data);
     initInfoForm();
     ElMessage.success("个人资料已保存");
     return true;
   } catch (e) {
     console.error(e);
+    ElMessage.error("个人资料保存失败，请重试");
     return false;
   } finally {
     infoSubmitting.value = false;
