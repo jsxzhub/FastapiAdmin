@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { FormSchema } from '@wot-ui/ui/components/wd-form/types'
-import type { CaptchaInfo, LoginFormData, OAuthProvider } from '@/api/module_system/auth'
+import type { CaptchaInfo, LoginFormData } from '@/api/module_system/auth'
 import { onLoad } from '@dcloudio/uni-app'
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -212,37 +212,9 @@ async function handleSubmit() {
   }
 }
 
-/** 跳转注册页 */
-function goRegister() {
-  uni.navigateTo({ url: '/pages/login/register/index' })
-}
-
 /** 跳转忘记密码页 */
 function goForget() {
   uni.navigateTo({ url: '/pages/login/forget/index' })
-}
-
-/** 第三方 OAuth 登录 */
-async function handleOAuth(provider: OAuthProvider) {
-  try {
-    const result = await AuthAPI.getOAuthLoginUrl(provider)
-    if (result?.url) {
-      // #ifdef H5
-      window.location.href = result.url
-      // #endif
-      // #ifdef MP-WEIXIN
-      uni.setClipboardData({
-        data: result.url,
-        success: () => {
-          uni.showToast({ title: t('login.oauthCopyTip'), icon: 'none' })
-        },
-      })
-      // #endif
-    }
-  }
-  catch {
-    uni.showToast({ title: t('login.oauthFailed'), icon: 'none' })
-  }
 }
 </script>
 
@@ -330,50 +302,6 @@ async function handleOAuth(provider: OAuthProvider) {
           {{ loading ? t('login.submitting') : t('login.submit') }}
         </wd-button>
       </wd-form>
-    </view>
-
-    <!-- OAuth Login -->
-    <view class="oauth-section">
-      <wd-divider>{{ t('login.thirdParty') }}</wd-divider>
-      <wd-grid :column="4" clickable :gutter="10">
-        <!-- WeChat -->
-        <wd-grid-item @click="handleOAuth('wechat')">
-          <view class="oauth-btn__icon" style="background: #07C160">
-            <image class="oauth-btn__iconify" src="/static/icons/wechat.svg" />
-          </view>
-          <wd-text class="oauth-btn__label" :text="t('login.wechat')" />
-        </wd-grid-item>
-
-        <!-- QQ -->
-        <wd-grid-item @click="handleOAuth('qq')">
-          <view class="oauth-btn__icon" style="background: #12B7F5">
-            <image class="oauth-btn__iconify" src="/static/icons/qq.svg" />
-          </view>
-          <wd-text class="oauth-btn__label" :text="t('login.qq')" />
-        </wd-grid-item>
-
-        <!-- Gitee -->
-        <wd-grid-item @click="handleOAuth('gitee')">
-          <view class="oauth-btn__icon" style="background: #C71D23">
-            <image class="oauth-btn__iconify" src="/static/icons/gitee.svg" />
-          </view>
-          <wd-text class="oauth-btn__label" :text="t('login.gitee')" />
-        </wd-grid-item>
-
-        <!-- GitHub -->
-        <wd-grid-item @click="handleOAuth('github')">
-          <view class="oauth-btn__icon" style="background: #24292F">
-            <image class="oauth-btn__iconify" src="/static/icons/github.svg" />
-          </view>
-          <wd-text class="oauth-btn__label" :text="t('login.github')" />
-        </wd-grid-item>
-      </wd-grid>
-    </view>
-
-    <!-- Footer -->
-    <view class="login-footer">
-      <wd-text class="login-footer__text" :text="t('login.noAccount')" />
-      <wd-text class="login-footer__link" :text="t('login.toRegister')" type="primary" @click="goRegister" />
     </view>
   </view>
 </template>
@@ -579,18 +507,6 @@ async function handleOAuth(provider: OAuthProvider) {
   font-size: var(--font-md, 28rpx);
 }
 
-/* ===== OAuth Section ===== */
-.oauth-section {
-  width: 100%;
-  margin-top: 8rpx;
-  flex-shrink: 0;
-
-  /* 去掉宫格项默认填充背景，仅保留图标/文字与轻量点击反馈 */
-  :deep(.wd-grid-item) {
-    --wot-grid-item-bg: transparent;
-  }
-}
-
 /* ===== 微信一键登录区域 ===== */
 .wx-login-section {
   margin-bottom: 16rpx;
@@ -598,45 +514,6 @@ async function handleOAuth(provider: OAuthProvider) {
   :deep(.wd-button) {
     height: 88rpx;
     font-size: 30rpx;
-  }
-}
-
-.oauth-btn__icon {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 36rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.oauth-btn__iconify {
-  width: 40rpx;
-  height: 40rpx;
-}
-
-.oauth-btn__label {
-  font-size: var(--font-xs, 20rpx);
-  @apply wot-text-text-auxiliary;
-}
-
-/* ===== Footer ===== */
-.login-footer {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 8rpx;
-  padding: 12rpx 0 0;
-  flex-shrink: 0;
-
-  &__text {
-    font-size: var(--font-md, 28rpx);
-    @apply wot-text-text-auxiliary;
-  }
-
-  &__link {
-    font-size: var(--font-md, 28rpx);
   }
 }
 
