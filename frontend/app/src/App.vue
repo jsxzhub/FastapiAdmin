@@ -1,5 +1,24 @@
 <script setup lang="ts">
-onLaunch(() => {})
+import { useUserStore } from '@/store/userStore'
+
+/**
+ * 启动校验：本地存在 access_token 时，向后端确认会话是否仍然有效。
+ *
+ * 为什么不看本地 JWT 的 exp：后端默认开启滑动续期（TOKEN_SLIDING_EXPIRE），
+ * 每次请求都跳过 JWT exp 校验、由 Redis 会话 TTL 决定有效期（会话绝对上限 7 天），
+ * 按本地 exp 判断会把服务端仍然有效的会话误踢。
+ *
+ * 因此改为发一次带鉴权的请求（getInfo）交后端裁决：
+ * - 会话仍有效 → 正常进入应用（access_token 过期时由 http 层静默刷新后重放）
+ * - 会话已失效（过期/被踢/停用/超最大存活）→ http 层清空凭据并 reLaunch 登录页
+ * - 网络异常 → getInfo 内部已吞掉错误，保留本地会话，避免误登出
+ */
+onLaunch(() => {
+  const userStore = useUserStore()
+  if (!userStore.getAccessToken())
+    return
+  void userStore.getInfo()
+})
 </script>
 
 <style lang="scss">
@@ -7,6 +26,6 @@ onLaunch(() => {})
    - theme.scss：玻璃水滴渐变主题变量（6 套主题色）
    - base.scss：页面容器 / 暗色背景等基础全局样式
    页面级样式（登录表单输入框、滑块等）保留在各页面 scoped 内 */
-@import './styles/theme.scss';
-@import './styles/base.scss';
+@use './styles/theme.scss';
+@use './styles/base.scss';
 </style>

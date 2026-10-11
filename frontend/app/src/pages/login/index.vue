@@ -80,7 +80,59 @@ function retrySliderInit(retry = 0) {
     return
   }
   verify.init()
+  bindSlideMouseBridge()
 }
+
+// #ifdef H5
+/** 派发合成 touch 事件（组件内部只读 clientX/clientY，无需 Touch 构造器，规避其浏览器兼容性） */
+function dispatchSyntheticTouch(el: HTMLElement, type: 'touchstart' | 'touchmove' | 'touchend', clientX: number, clientY: number) {
+  const event = new Event(type, { bubbles: true, cancelable: true }) as Event & { touches: unknown[], changedTouches: unknown[] }
+  const point = { identifier: 0, target: el, clientX, clientY }
+  // touchend 的 touches 必须为空数组，否则组件 onTouchEnd 的前置条件不成立
+  event.touches = type === 'touchend' ? [] : [point]
+  event.changedTouches = [point]
+  el.dispatchEvent(event)
+}
+
+/**
+ * H5 桌面端鼠标拖拽桥接
+ *
+ * wd-slide-verify 只绑定 @touchstart/@touchmove/@touchend：桌面浏览器无触摸屏时鼠标操作
+ * 不会产生 touch 事件，滑块完全拖不动（移动端正常）。这里给滑块按钮补一层 mouse 监听，
+ * 把鼠标坐标翻译成合成 touch 事件派发回同一个按钮，复用组件原有拖拽逻辑，不改动 node_modules。
+ */
+function bindSlideMouseBridge() {
+  const button = document.querySelector<HTMLElement>('.wd-slide-verify__button')
+  if (!button || button.dataset.mouseBridged === '1')
+    return
+  const btn = button
+  btn.dataset.mouseBridged = '1'
+
+  let dragging = false
+
+  function onMouseMove(e: MouseEvent) {
+    if (dragging)
+      dispatchSyntheticTouch(btn, 'touchmove', e.clientX, e.clientY)
+  }
+
+  function onMouseUp(e: MouseEvent) {
+    if (!dragging)
+      return
+    dragging = false
+    document.removeEventListener('mousemove', onMouseMove)
+    document.removeEventListener('mouseup', onMouseUp)
+    dispatchSyntheticTouch(btn, 'touchend', e.clientX, e.clientY)
+  }
+
+  btn.addEventListener('mousedown', (e: MouseEvent) => {
+    e.preventDefault() // 阻止拖拽时选中页面文字
+    dragging = true
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
+    dispatchSyntheticTouch(btn, 'touchstart', e.clientX, e.clientY)
+  })
+}
+// #endif
 
 /** 滑块验证是否已通过（后端返回 verified=true 后置位） */
 const sliderPassed = ref(false)
