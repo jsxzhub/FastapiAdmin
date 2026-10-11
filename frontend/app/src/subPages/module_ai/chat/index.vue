@@ -21,12 +21,74 @@ useI18nNavTitle('chat.title')
 
 const toast = useToast()
 const sessions = ref<ChatSession[]>([])
-const currentSession = ref<number | null>(null)
+const currentSession = ref<string | null>(null)
 const currentTitle = ref(t('chat.title'))
 const messages = ref<ChatMessage[]>([])
 const inputText = ref('')
 const loading = ref(false)
 const showSessions = ref(false)
+
+/** 会话历史：搜索关键字 + 折叠分组（参照 web 端 AI 侧边栏） */
+const searchQuery = ref('')
+const collapsedGroups = ref<Set<string>>(new Set())
+/** 分组顺序固定：今天 / 昨天 / 本周 / 更早 */
+const GROUP_KEYS = ['today', 'yesterday', 'week', 'earlier'] as const
+type GroupKey = (typeof GROUP_KEYS)[number]
+
+const filteredSessions = computed<ChatSession[]>(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q)
+    return sessions.value
+  return sessions.value.filter(s => (s.title || s.session_name || '').toLowerCase().includes(q))
+})
+
+const groupedSessions = computed<{ key: GroupKey, list: ChatSession[] }[]>(() => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const todayStart = today.getTime() / 1000
+  const yesterdayStart = todayStart - 86400
+  const weekAgo = todayStart - 7 * 86400
+
+  const buckets: Record<GroupKey, ChatSession[]> = { today: [], yesterday: [], week: [], earlier: [] }
+  filteredSessions.value.forEach((s) => {
+    // 后端 updated_at 为 Unix 秒；缺失时归入「更早」避免会话被隐藏
+    const t = s.updated_at ?? s.created_at
+    if (t === undefined || t < weekAgo)
+      buckets.earlier.push(s)
+    else if (t >= todayStart)
+      buckets.today.push(s)
+    else if (t >= yesterdayStart)
+      buckets.yesterday.push(s)
+    else
+      buckets.week.push(s)
+  })
+  return GROUP_KEYS
+    .map(key => ({ key, list: buckets[key] }))
+    .filter(g => g.list.length > 0)
+})
+
+/** Unix 秒 → 展示用的时间文本（今天只显示时分，其余显示月-日） */
+function formatSessionTime(ts?: number): string {
+  if (!ts)
+    return ''
+  const d = new Date(ts * 1000)
+  const now = new Date()
+  const sameDay = d.toDateString() === now.toDateString()
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return sameDay
+    ? `${hh}:${mm}`
+    : `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')} ${hh}:${mm}`
+}
+
+function toggleGroup(key: GroupKey) {
+  const next = new Set(collapsedGroups.value)
+  if (next.has(key))
+    next.delete(key)
+  else
+    next.add(key)
+  collapsedGroups.value = next
+}
 
 /** 流式对话（WebSocket） */
 const streamChat = useAiChat()
@@ -60,7 +122,7 @@ async function loadSessions() {
   loading.value = true
   try {
     const res = await ChatAPI.getSessions()
-    sessions.value = res.list || []
+    sessions.value = res.items || []
   }
   catch {
     sessions.value = []
@@ -83,7 +145,7 @@ async function createSession() {
   catch { toast.error(t('chat.createFailed')) }
 }
 
-async function selectSession(id: number, title?: string) {
+async function selectSession(id: string, title?: string) {
   currentSession.value = id
   currentTitle.value = title || t('chat.sessionId', { id })
   showSessions.value = false
@@ -103,7 +165,7 @@ async function selectSession(id: number, title?: string) {
   finally { loading.value = false }
 }
 
-async function deleteSession(id: number) {
+async function deleteSession(id: string) {
   uni.showModal({
     title: t('common.title'),
     content: t('chat.deleteConfirm'),
@@ -121,6 +183,31 @@ async function deleteSession(id: number) {
         }
         catch { toast.error(t('chat.deleteFailed')) }
       }
+    },
+  })
+}
+
+/** 重命名会话（参照 web 端侧边栏的重命名入口） */
+function renameSession(session: ChatSession) {
+  uni.showModal({
+    title: t('chat.rename'),
+    content: session.title || session.session_name || '',
+    editable: true,
+    placeholderText: t('chat.renamePlaceholder'),
+    success: async (r) => {
+      if (!r.confirm)
+        return
+      const title = (r.content || '').trim()
+      if (!title)
+        return toast.warning(t('chat.renameEmpty'))
+      try {
+        await ChatAPI.updateSession(session.id, { title })
+        session.title = title
+        if (currentSession.value === session.id)
+          currentTitle.value = title
+        toast.success(t('chat.renameSuccess'))
+      }
+      catch { toast.error(t('chat.renameFailed')) }
     },
   })
 }
@@ -154,28 +241,24 @@ async function sendMessage() {
   messages.value.push({ role: 'user', content: text, time: new Date().toLocaleTimeString() })
   inputText.value = ''
   // 占位 AI 消息，流式分片实时追加（打字机效果）
-  const aiMsg: ChatMessage = { role: 'ai', content: '', time: new Date().toLocaleTimeString() }
-  messages.value.push(aiMsg)
+  messages.value.push({ role: 'ai', content: '', time: new Date().toLocaleTimeString() })
+  // 必须取数组内的响应式代理来改写：直接改裸对象不会触发视图更新（mp-html 收不到新 content）
+  const aiMsg = messages.value[messages.value.length - 1]
   scrollToBottom()
 
-  try {
-    await streamChat.sendMessage({ message: text, session_id: String(sid) }, {
-      onChunk: (chunk) => {
-        aiMsg.content += chunk
-        scrollToBottom()
-      },
-      onDone: () => {
-        if (!aiMsg.content)
-          aiMsg.content = t('chat.noReply')
-      },
-      onError: (err) => {
-        aiMsg.content = err || t('chat.requestFailed')
-      },
-    })
-  }
-  finally {
-    streaming.value = false
-  }
+  await streamChat.sendMessage({ message: text, session_id: String(sid) }, {
+    onChunk: (chunk) => {
+      aiMsg.content += chunk
+      scrollToBottom()
+    },
+    onDone: () => {
+      if (!aiMsg.content)
+        aiMsg.content = t('chat.noReply')
+    },
+    onError: (err) => {
+      aiMsg.content = err || t('chat.requestFailed')
+    },
+  })
 }
 
 /** 停止当前生成 */
@@ -223,15 +306,45 @@ onLoad(() => {
             {{ t('chat.new') }}
           </wd-button>
         </view>
+        <!-- 搜索会话历史 -->
+        <wd-search v-model="searchQuery" :placeholder="t('chat.searchPlaceholder')" hide-cancel class="mb-md" />
         <SkeletonPage v-if="loading && sessions.length === 0" />
-        <view v-for="s in sessions" v-else :key="s.id" class="admin-card">
-          <wd-cell :title="s.title" :label="s.created_at ? String(s.created_at) : ''" center is-link @click="selectSession(s.id, s.title)">
-            <template #default>
-              <wd-icon name="delete" size="18px" color="var(--wot-danger-main)" @click.stop="deleteSession(s.id)" />
+        <template v-else>
+          <!-- 按时间分组（今天/昨天/本周/更早），组标题可折叠 -->
+          <view v-for="group in groupedSessions" :key="group.key" class="mb-md">
+            <view
+              class="mb-xs flex items-center justify-between px-xs"
+              @click="toggleGroup(group.key)"
+            >
+              <wd-text class="wot-text-text-auxiliary text-2.5 font-medium" :text="t(`chat.group${group.key[0].toUpperCase()}${group.key.slice(1)}`, { count: group.list.length })" />
+              <wd-icon
+                name="arrow-down"
+                size="14px"
+                color="var(--wot-text-auxiliary)"
+                :style="{ transform: collapsedGroups.has(group.key) ? 'rotate(-90deg)' : 'none', transition: 'transform .2s' }"
+              />
+            </view>
+            <template v-if="!collapsedGroups.has(group.key)">
+              <view v-for="s in group.list" :key="s.id" class="admin-card">
+                <wd-cell
+                  :title="s.title || s.session_name || t('chat.untitled')"
+                  :label="formatSessionTime(s.updated_at ?? s.created_at)"
+                  center
+                  :class="currentSession === s.id ? 'wot-text-primary-6' : ''"
+                  @click="selectSession(s.id, s.title)"
+                >
+                  <template #default>
+                    <view class="flex items-center gap-sm">
+                      <wd-icon name="edit" size="18px" color="var(--wot-text-auxiliary)" @click.stop="renameSession(s)" />
+                      <wd-icon name="delete" size="18px" color="var(--wot-danger-main)" @click.stop="deleteSession(s.id)" />
+                    </view>
+                  </template>
+                </wd-cell>
+              </view>
             </template>
-          </wd-cell>
-        </view>
-        <wd-empty v-if="!loading && sessions.length === 0" :tip="t('chat.empty')" />
+          </view>
+          <wd-empty v-if="!loading && filteredSessions.length === 0" :tip="searchQuery.trim() ? t('chat.noMatch') : t('chat.empty')" />
+        </template>
       </view>
     </view>
 

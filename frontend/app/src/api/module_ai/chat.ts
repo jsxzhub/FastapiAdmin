@@ -6,34 +6,38 @@ import { http } from '@/http'
 const AI_BASE = '/ai/chat'
 
 export const ChatAPI = {
-  /** 获取会话列表 */
-  getSessions(params?: Record<string, any>): Promise<PageResult<ChatSession>> {
-    return http.Get(`${AI_BASE}/list`, params)
+  /** 获取会话列表（后端分页结构为 { items, total, ... }） */
+  getSessions(params?: Record<string, any>): Promise<{ items: ChatSession[], total: number }> {
+    // cacheFor: 0 关闭 alova 对 GET 的默认 5 分钟缓存（默认 cacheFor={GET:300000}）。
+    // 否则删除/重命名会话后重新拉取列表会命中旧缓存，出现"已删会话复现"的假象
+    return http.Get(`${AI_BASE}/list`, { params, cacheFor: 0 })
   },
   /** 创建会话 */
   createSession(title?: string): Promise<ChatSession> {
     return http.Post(`${AI_BASE}/create`, { title: title || '新对话' })
   },
   /** 获取会话详情（含消息列表） */
-  getDetail(sessionId: number): Promise<{ messages: ChatMessage[] }> {
-    return http.Get(`${AI_BASE}/detail/${sessionId}`)
+  getDetail(sessionId: string): Promise<{ messages: ChatMessage[] }> {
+    // 同上：消息随时新增，禁用 GET 缓存避免展示旧消息
+    return http.Get(`${AI_BASE}/detail/${sessionId}`, { cacheFor: 0 })
   },
   /** 更新会话标题 */
-  updateSession(sessionId: number, data: Record<string, any>): Promise<void> {
+  updateSession(sessionId: string, data: Record<string, any>): Promise<void> {
     return http.Put(`${AI_BASE}/update/${sessionId}`, data)
   },
   /** 删除会话 */
-  removeSession(ids: number[]): Promise<void> {
+  removeSession(ids: string[]): Promise<void> {
     return http.Delete(`${AI_BASE}/delete`, ids)
   },
   /** 发送消息 (非流式) */
-  sendMessage(sessionId: number, content: string): Promise<ChatMessage> {
+  sendMessage(sessionId: string, content: string): Promise<ChatMessage> {
     // silent：聊天页将错误内联展示为 AI 消息，避免与全局 toast 重复提示
     return http.Post(`${AI_BASE}/ai-chat`, { session_id: sessionId, content }, { meta: { silent: true } })
   },
   /** 获取 AI 模型配置列表 */
   getModels(): Promise<AIModelList> {
-    return http.Get(`${AI_BASE}/model`)
+    // 同上：新增/切换模型后需立即反映，禁用 GET 缓存
+    return http.Get(`${AI_BASE}/model`, { cacheFor: 0 })
   },
   /** 新增 AI 模型配置 */
   createModel(data: AIModelForm): Promise<AIModelConfig> {
@@ -56,10 +60,15 @@ export const ChatAPI = {
 /* ==================== 类型定义 ==================== */
 
 export interface ChatSession {
-  id: number
-  session_name?: string
+  /** 会话 ID（后端为 UUID 字符串） */
+  id: string
+  session_id?: string
   title?: string
+  session_name?: string
+  /** 消息数量 */
+  message_count?: number
   created_at?: number
+  updated_at?: number
 }
 
 export interface ChatMessage {

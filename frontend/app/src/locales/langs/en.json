@@ -258,7 +258,19 @@
     "stop": "Stop",
     "wsConnectFailed": "WebSocket connection failed",
     "wsDisconnected": "Connection lost, please retry",
-    "wsSendFailed": "Connection failed, please retry later"
+    "wsSendFailed": "Connection failed, please retry later",
+    "searchPlaceholder": "Search sessions",
+    "groupToday": "Today ({count})",
+    "groupYesterday": "Yesterday ({count})",
+    "groupWeek": "This Week ({count})",
+    "groupEarlier": "Earlier ({count})",
+    "untitled": "Untitled session",
+    "noMatch": "No matching sessions",
+    "rename": "Rename",
+    "renamePlaceholder": "Enter a new session name",
+    "renameEmpty": "Session name cannot be empty",
+    "renameSuccess": "Renamed",
+    "renameFailed": "Rename failed"
   },
   "aiModels": {
     "title": "AI Model Config",

@@ -258,7 +258,19 @@
     "stop": "停止",
     "wsConnectFailed": "WebSocket 连接失败",
     "wsDisconnected": "连接已断开，请重试",
-    "wsSendFailed": "连接失败，请稍后重试"
+    "wsSendFailed": "连接失败，请稍后重试",
+    "searchPlaceholder": "搜索会话历史",
+    "groupToday": "今天 ({count})",
+    "groupYesterday": "昨天 ({count})",
+    "groupWeek": "本周 ({count})",
+    "groupEarlier": "更早 ({count})",
+    "untitled": "未命名会话",
+    "noMatch": "未找到匹配的会话",
+    "rename": "重命名",
+    "renamePlaceholder": "请输入新的会话名称",
+    "renameEmpty": "会话名称不能为空",
+    "renameSuccess": "重命名成功",
+    "renameFailed": "重命名失败"
   },
   "aiModels": {
     "title": "AI 模型配置",
