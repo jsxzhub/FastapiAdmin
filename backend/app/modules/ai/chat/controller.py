@@ -251,9 +251,8 @@ async def websocket_chat_controller(websocket: WebSocket) -> None:
 
     ws://127.0.0.1:8001/api/v1/ai/chat/ws
 
-    令牌优先通过 Sec-WebSocket-Protocol 携带（不会进入网关/服务的 access log）：
+    令牌通过 Sec-WebSocket-Protocol 子协议携带（不进入 URL / 网关 access log）：
       new WebSocket(url, ["access_token", "access_token." + jwt])
-    小程序等无法自定义子协议的客户端，可用 ?token= 兜底。
     """
     # 握手阶段完成认证；未 accept 前无法发送业务报文，失败直接关闭
     try:

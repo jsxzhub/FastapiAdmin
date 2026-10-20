@@ -11,8 +11,12 @@ export interface AiChatStreamHandlers {
   onError?: (message: string) => void
 }
 
-/** 构建 AI 对话 WebSocket 地址：优先 VITE_APP_WS_ENDPOINT，否则从 API 域名推导（http→ws） */
-function buildChatWsUrl(): string {
+/**
+ * 构建 AI 对话 WebSocket 连接参数：优先 VITE_APP_WS_ENDPOINT，否则从 API 域名推导（http→ws）
+ * token 通过 Sec-WebSocket-Protocol 子协议携带（access_token.<jwt>），不进入 URL / 网关 access log，
+ * 后端 app/core/dependencies.py:get_websocket_token 读取子协议。
+ */
+function buildChatWsOptions(): { url: string, protocols: string[] } {
   const userStore = useUserStore()
   const token = userStore.getAccessToken() || ''
   let wsBase = import.meta.env.VITE_APP_WS_ENDPOINT || ''
@@ -21,8 +25,9 @@ function buildChatWsUrl(): string {
     wsBase = apiBase.replace(/^http/, 'ws')
   }
   const apiPrefix = import.meta.env.VITE_APP_BASE_API || '/api/v1'
-  // token 走 query（小程序 WebSocket 不支持自定义 subprotocol，后端已兼容 ?token=）
-  return `${wsBase}${apiPrefix}/ai/chat/ws?token=${encodeURIComponent(token)}`
+  // 子协议列表：含 jwt 的 access_token.<jwt> 用于鉴权；纯 access_token 便于握手协商回显
+  const protocols = token ? ['access_token', `access_token.${token}`] : ['access_token']
+  return { url: `${wsBase}${apiPrefix}/ai/chat/ws`, protocols }
 }
 
 /**
@@ -47,7 +52,7 @@ export function useAiChat() {
     pendingOpen = new Promise<void>((resolve) => {
       resolveOpen = resolve
     })
-    const task = uni.connectSocket({ url: buildChatWsUrl(), complete: () => {} })
+    const task = uni.connectSocket({ ...buildChatWsOptions(), complete: () => {} })
     socketTask = task
     task.onOpen(() => resolveOpen?.())
     task.onMessage((res) => {

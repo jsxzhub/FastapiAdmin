@@ -55,8 +55,8 @@ WS_TOKEN_SUBPROTOCOL = "access_token"
 def get_websocket_token(websocket: WebSocket) -> tuple[str | None, str | None]:
     """解析 WebSocket 握手携带的令牌。
 
-    优先读取 Sec-WebSocket-Protocol 中的 "access_token.<jwt>"：令牌不出现在 URL 中，
-    不会进入网关/服务的 access log。小程序等无法自定义子协议的客户端仍可用 ?token= 兜底。
+    仅从 Sec-WebSocket-Protocol 读取 "access_token.<jwt>"：令牌不出现在 URL 中，
+    不会进入网关/服务的 access log。
 
     参数:
     - websocket (WebSocket): WebSocket 连接对象。
@@ -70,7 +70,7 @@ def get_websocket_token(websocket: WebSocket) -> tuple[str | None, str | None]:
             token = proto[len(f"{WS_TOKEN_SUBPROTOCOL}.") :]
             if token:
                 return token, WS_TOKEN_SUBPROTOCOL
-    return websocket.query_params.get("token"), None
+    return None, None
 
 
 async def websocket_authenticate(websocket: WebSocket) -> tuple[AuthSchema, str | None]:
