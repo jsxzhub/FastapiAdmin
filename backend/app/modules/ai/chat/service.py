@@ -7,17 +7,16 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any
 
-import httpx
-from agno.run.team import TeamRunOutput
 from agno.session.team import TeamSession
 from redis.asyncio import Redis
 
 from app.common.enums import RET, RedisInitKeyConfig
+from app.config.setting import settings
 from app.core.base_schema import AuthSchema, PageResultSchema
 from app.core.exceptions import CustomException
 from app.core.logger import logger
 from app.core.redis_crud import RedisCURD
-from app.utils.ai_factory import AgnoFactory
+from app.utils.ai_factory import DEFAULT_CUSTOM_AGENT_ID, AgnoFactory
 from app.utils.crypto_util import CryptoUtil
 
 from .crud import TEAM_ID, ChatSessionCRUD
@@ -169,15 +168,20 @@ class ChatService:
         session_id = await _ensure_session(crud, query.session_id)
 
         agno_factory = AgnoFactory()
-        tools = self._chat_tools(bool(query.use_tools))
-        agent = agno_factory.create_agent(
-            user_id=self.auth.user.username or "user",
-            team_id=TEAM_ID,
-            session_id=session_id,
-            db=crud.db,
-            model_config=model_config,
-            tools=tools,
-        )
+        if settings.CUSTOM_AGENT_ENABLE:
+            agent = agno_factory.create_agent_custom(
+                agent_id=DEFAULT_CUSTOM_AGENT_ID,
+                db=crud.db,
+                model_config=model_config,
+            )
+        else:
+            agent = agno_factory.create_agent(
+                user_id=self.auth.user.username or "user",
+                team_id=TEAM_ID,
+                session_id=session_id,
+                db=crud.db,
+                model_config=model_config,
+            )
 
         message = (query.message or "").strip()
         if not message:
@@ -187,7 +191,12 @@ class ChatService:
         logger.info("开始流式生成: session_id={} message={!r}", session_id, message[:80])
         chunk_count = 0
         try:
-            stream = agent.arun(input=message, stream=True)
+            stream = agent.arun(
+                input=message,
+                stream=True,
+                session_id=session_id,
+                user_id=self.auth.user.username or "user",
+            )
             if hasattr(stream, "__aiter__"):
                 async for chunk in stream:  # type: ignore[union-attr]
                     if stop_event is not None and stop_event.is_set():
@@ -231,17 +240,29 @@ class ChatService:
         sid = await _ensure_session(crud, session_id)
 
         agno_factory = AgnoFactory()
-        agent = agno_factory.create_agent(
-            user_id=self.auth.user.username or "user",
-            team_id=TEAM_ID,
-            session_id=sid,
-            db=crud.db,
-            model_config=model_config,
-            tools=self._chat_tools(use_tools),
-        )
+        if settings.CUSTOM_AGENT_ENABLE:
+            # 自定义智能体：逻辑由用户在 AgnoFactory.create_agent_custom 中填充
+            agent = agno_factory.create_agent_custom(
+                agent_id=DEFAULT_CUSTOM_AGENT_ID,
+                db=crud.db,
+                model_config=model_config,
+            )
+        else:
+            # 默认：原始 agno Team 智能体
+            agent = agno_factory.create_agent(
+                user_id=self.auth.user.username or "user",
+                team_id=TEAM_ID,
+                session_id=sid,
+                db=crud.db,
+                model_config=model_config,
+            )
 
         try:
-            response: TeamRunOutput = await agent.arun(input=message)
+            response: Any = await agent.arun(
+                input=message,
+                session_id=sid,
+                user_id=self.auth.user.username or "user",
+            )
         except Exception as e:
             logger.error(f"非流式对话失败: {e}", exc_info=True)
             return {

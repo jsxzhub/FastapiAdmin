@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     ENVIRONMENT: EnvironmentEnum = EnvironmentEnum.DEV
 
     # ================================================= #
+    # ******************* AI 智能体开关 ****************** #
+    # ================================================= #
+    CUSTOM_AGENT_ENABLE: bool = False  # True 启用自定义智能体（AgnoFactory.create_agent_custom），False 用默认 agno Team
+
+    # ================================================= #
     # ******************* 服务器配置 ****************** #
     # ================================================= #
     SERVER_HOST: str = "0.0.0.0"  # 允许访问的IP地址

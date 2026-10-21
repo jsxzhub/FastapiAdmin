@@ -39,7 +39,12 @@ def _get_agno_db() -> Any:
                 if db_type == "mysql":
                     _db_instance = AsyncMySQLDb(db_url=db_uri, db_schema=settings.DATABASE_NAME, create_schema=False)
                 elif db_type == "postgres":
-                    _db_instance = AsyncPostgresDb(db_url=db_uri, db_schema="public", create_schema=False)
+                    if settings.CUSTOM_AGENT_ENABLE:
+                        # 自定义智能体：记忆隔离到独立 "ai" schema（create_schema=True 让 agno 启动时自动建 schema）
+                        _db_instance = AsyncPostgresDb(db_url=db_uri, db_schema="ai", create_schema=True)
+                    else:
+                        # 原始 agno Team：沿用默认 public schema（postgres 自带，无需创建）
+                        _db_instance = AsyncPostgresDb(db_url=db_uri, db_schema="public", create_schema=False)
                 elif db_type == "sqlite":
                     _db_instance = AsyncSqliteDb(db_file=db_uri.replace("sqlite+aiosqlite:///", ""))
                 else:
