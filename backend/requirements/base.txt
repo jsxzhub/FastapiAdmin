@@ -2,33 +2,33 @@
 # 核心依赖（与数据库、对象存储无关，任何部署方式都需要）
 # 用法：pip install -r requirements/base.txt -r requirements/db/<你的数据库>.txt
 # ============================================================================
-agno==2.5.8                            # AI agent 框架
+agno==3.1.2                            # AI agent 框架
 aiosqlite==0.22.1                      # AI 模块内嵌知识库固定用 sqlite（与主库类型无关），故列入核心
 aiofiles==24.1.0                       # 异步文件操作
 alembic==1.18.4                        # 数据库迁移
 apscheduler==3.11.0                    # 定时任务
 bleach==6.4.0                          # HTML 过滤
-click==8.1.7                           # 命令行参数解析（typer 依赖）
+click==8.5.0                           # 命令行参数解析（typer 依赖）
 croniter==6.2.4                        # cron 表达式校验
 fastapi==0.138.2                       # Web 框架
 greenlet==3.5.2                        # SQLAlchemy 异步必需
 httpx==0.28.1                          # HTTP 客户端
 jinja2==3.1.6                          # 模板引擎（代码生成）
 loguru==0.7.3                          # 日志
-openai==2.46.0                         # OpenAI 兼容接口
+openai==3.26.1                         # OpenAI 兼容接口
 openpyxl==3.1.5                        # Excel 导入导出
 psutil==7.2.2                          # 系统信息采集
 py-ip2region==3.0.4                    # IP 归属地离线查询
 pydantic[email]>=2.12.5                # 数据校验 + 邮箱
 pydantic-settings>=2.6.1,<3            # 配置管理
-pyjwt==2.13.0                          # 令牌签发校验
+pyjwt==2.15.1                          # 令牌签发校验
 python-multipart==0.0.32               # 表单解析
 redis==7.1.0                           # 缓存 / 会话
 rich==15.0.0                           # 终端输出美化
 sqlalchemy==2.0.51                     # ORM
 sqlglot[rs]==27.8.0                    # SQL 解析
 tinycss2==1.5.1                        # bleach 依赖
-typer==0.26.7                          # CLI 入口（main.py）
+typer==0.27.3                          # CLI 入口（main.py）
 ua-parser==1.0.2                       # UA 解析
-uvicorn==0.49.0                        # ASGI 服务器
-websockets>=16.0,<17.0                 # WebSocket
+uvicorn==0.54.0                        # ASGI 服务器
+websockets>=16.0,<18                   # WebSocket
