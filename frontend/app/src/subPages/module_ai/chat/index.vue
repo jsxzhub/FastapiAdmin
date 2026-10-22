@@ -280,7 +280,6 @@ onUnload(() => {
 
 onLoad(() => {
   loadSessions()
-  messages.value = [{ role: 'ai', content: t('chat.welcome') }]
 })
 </script>
 
@@ -371,7 +370,6 @@ onLoad(() => {
           >
             <wd-icon name="user" size="18px" color="#FFFFFF" />
           </view>
-          <wd-avatar v-else size="32px" shape="round" src="/static/logo.png" />
           <view
             class="max-w-[72%] break-words px-3 py-2"
             :class="msg.role === 'user' ? 'wot-bg-primary-6 wot-text-text-white' : 'wot-bg-filled-oppo wot-text-text-main wot-border-border-main'"
