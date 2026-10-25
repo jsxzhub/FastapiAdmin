@@ -1,245 +1,178 @@
-<div align="center">
-     <p align="center">
-          <img src="./frontend/web/public/logo.png" width="150" height="150" alt="logo" />
-     </p>
-     <h1>FastApiAdmin <sup style="background-color: #28a745; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.4em; vertical-align: super; margin-left: 5px;">v3.0.0</sup></h1>
-     <h3>🚀 一套代码交付 Web / H5 / 小程序，AI 代码生成 + RBAC + Docker 开箱即用</h3>
-     <p>基于 <b>FastAPI + Vue3 + TypeScript</b> 的企业级全栈底座：类型共享、权限完整、三端同源</p>
-     <p align="center">
-          <a href="https://github.com/fastapiadmin/FastapiAdmin.git" target="_blank">
-               <img src="https://img.shields.io/github/stars/fastapiadmin/FastapiAdmin?style=social" alt="GitHub Stars">
-          </a>
-          <a href="https://github.com/fastapiadmin/FastapiAdmin/forks" target="_blank">
-               <img src="https://img.shields.io/github/forks/fastapiadmin/FastapiAdmin?style=social" alt="GitHub Forks">
-          </a>
-          <a href="https://gitee.com/fastapiadmin/FastapiAdmin.git" target="_blank">
-               <img src="https://gitee.com/fastapiadmin/FastapiAdmin/badge/star.svg?theme=dark" alt="Gitee Stars">
-          </a>
-          <a href="https://gitee.com/fastapiadmin/FastapiAdmin.git" target="_blank">
-               <img src="https://gitee.com/fastapiadmin/FastapiAdmin/badge/fork.svg?theme=dark" alt="Gitee Forks">
-          </a>
-          <a href="https://atomgit.com/fastapiadmin/FastapiAdmin" target="_blank">
-               <img src="https://atomgit.com/fastapiadmin/FastapiAdmin/star/badge.svg" alt="AtomGit G-Star">
-          </a>
-          <br>
-          <a href="https://gitee.com/fastapiadmin/FastapiAdmin/blob/master/LICENSE" target="_blank">
-               <img src="https://img.shields.io/badge/License-MIT-orange" alt="License">
-          </a>
-          <a href="https://github.com/fastapiadmin/FastapiAdmin/commits" target="_blank">
-               <img src="https://img.shields.io/github/commit-activity/m/fastapiadmin/FastapiAdmin?style=flat&label=commits" alt="Commit Activity">
-          </a>
-          <img src="https://img.shields.io/badge/Python-≥3.12-blue">
-          <img src="https://img.shields.io/badge/NodeJS-≥20.0-blue">
-          <img src="https://img.shields.io/badge/MySQL-≥8.0-blue">
-          <img src="https://img.shields.io/badge/Redis-≥7.0-blue">
-     </p>
+# 项目简介
+本项目基于 FastapiAdmin 二次开发，致力于打造一套开箱即用的后台管理框架。我们坚持永久免费开源，诚邀各路开发者共建共享，共同打磨更优质的企业级解决方案。
 
-简体中文 | [English](./README.en.md)
-
-</div>
-
-## 🖥️ 界面一览
-
-**Web 端**
-
-![仪表盘](frontend/web/public/dashboard.png)
-
-**移动端（H5 / 小程序 / App 同一套代码）**
-
-<p>
-<img src="frontend/web/public/app_login.png" width="180" alt="登录与拼图验证" />
-<img src="frontend/web/public/app_home.png" width="180" alt="移动端工作台" />
-<img src="frontend/web/public/app_mine.png" width="180" alt="个人中心" />
-</p>
-
-> 三端共享同一套品牌 Token：Logo、主色、圆角、间距、深色层级与危险操作语义保持一致。
-
-## 💡 为什么选择 FastapiAdmin？
-
-| 你需要的 | FastapiAdmin | Django Admin | 纯前端模板 |
-|---------|:-----------:|:-----------:|:---------:|
-| 🎯 **开箱即用**的后台系统 | ✅ | ⚠️ 功能有限 | ❌ 只有 UI |
-| ⚡ **FastAPI 异步**高性能后端 | ✅ | ❌ 同步为主 | ❌ 无后端 |
-| 🔐 **RBAC** 菜单/按钮/数据三级权限 | ✅ | ❌ 基础 | ❌ |
-| 🤖 **代码生成器**（选表 → 出前后端代码） | ✅ | ❌ | ❌ |
-| 📱 **移动端**（H5 + 小程序）一体 | ✅ | ❌ | ❌ |
-| 🐳 **Docker 一键部署**（含 Nginx + SSL） | ✅ | ❌ | ❌ |
-
-> 👉 详细技术选型对比：[为什么选择 FastapiAdmin？](https://service.fastapiadmin.com/guide/why)
-
-### ✅ 适合这些场景
-
-- 需要在 **1–4 周**内交付可用的企业后台、运营系统或客户项目；
-- 团队希望 **前后端类型共享**，减少接口联调与重复建模；
-- 同一业务要同时覆盖 **Web 管理端 + 移动端 / 小程序**；
-- 需要代码生成、RBAC、审计日志、定时任务等“底座能力”，而不是从零搭。
-
-### ⚠️ 不适合
-
-- 需要完整 IM（文件、撤回、已读回执、多端同步）的场景；
-- 一开始就要求多实例水平扩展的实时聊天 / 调度场景（当前按单实例设计）。
-
-## 🍪 在线体验
-
-| 端 | 地址 | 账号 |
-|----|------|------|
-| 💻 Web 端 | [service.fastapiadmin.com/web](https://service.fastapiadmin.com/web) | `admin` / `123456` |
-| 📱 移动端 | [service.fastapiadmin.com/app](https://service.fastapiadmin.com/app) | `admin` / `123456` |
-| 📖 官方文档 | [service.fastapiadmin.com](https://service.fastapiadmin.com) | 无需登录 |
-
-## 🚀 5–15 分钟本地跑起来
-
+# 安装
 ```bash
-# 1. 克隆
-git clone https://gitee.com/fastapiadmin/FastapiAdmin.git
-
-# 2. 配置环境
-cp backend/env/.env.example backend/env/.env.dev
-cp frontend/web/.env.development.example frontend/web/.env.development
-
-# 3. 启动后端（首次自动建表 + 初始化数据）
-cd backend && uv sync && uv run main.py run --env=dev
-
-# 4. 启动前端
-cd ../frontend/web && pnpm install && pnpm run dev
-
-# ✅ 浏览器打开 http://127.0.0.1:5173，用 admin/123456 登录
+git clone https://github.com/fastapiadmin/FastapiAdmin.git
 ```
 
-> 首次启动会自动建表并写入演示数据；后端默认 `8001`，前端默认 `5173`。生产环境请使用 Alembic 迁移与独立密钥。
-
-| 环境要求 | |
-|---------|------|
-| Python ≥ 3.12 | Node.js ≥ 20.0 + pnpm |
-| MySQL 8.0+ / PostgreSQL 14+ | Redis 6.x / 7.x |
-
-### 🐳 或者：Docker 一键部署
-
+# 后端
+## 配置
 ```bash
-cp docker/.env.example docker/.env    # 填写 MySQL / Redis 密码
-./deploy.sh                           # 自动构建镜像并启动全栈（含 Nginx + SSL）
+cd backend/
+cp env/.env.example env/.env.dev
 ```
 
-> 端口、SSL 证书、前端构建等细节见 [Docker 部署文档](docker/README.md)。
-
-## 📦 工程结构
-
-```
-FastapiAdmin/            # Monorepo 全栈工程
-├─ backend/              # FastAPI 后端（Pydantic 2.0 + SQLAlchemy + Alembic）
-├─ frontend/
-│   ├── web/             # Vue3 Web 前端（Element Plus + TypeScript）
-│   ├── app/             # UniApp 移动端（H5 + 小程序 + App）
-│   └── docs/            # VitePress 文档网站
-├─ docker/               # Docker Compose 一键部署（Nginx + SSL）
-├─ deploy.sh             # 一键部署脚本
-└─ LICENSE               # MIT 开源协议
+## 安装依赖
+```bash
+pip install -r requirements.txt
 ```
 
-## 🧱 技术栈
-
-| 层 | 技术 |
-| --- | --- |
-| 后端 | FastAPI · Pydantic 2 · SQLAlchemy 2 · Alembic · Redis |
-| Web | Vue 3 · TypeScript · Vite · Element Plus · Pinia · Tailwind |
-| 移动端 | UniApp · Vue 3 · Wot Design Uni |
-| AI | Agno · 可切换模型供应商 |
-| 部署 | Docker Compose · Nginx · SSL |
-
-## 📌 内置功能
-
-> **200+ REST 接口** · MySQL / PostgreSQL / SQLite 三方言 · SFTP / S3 / OSS / COS / OBS 五种存储协议 · `ENABLED_MODULES` 一行开关裁剪模块
-
-### 核心模块（始终启用，不可裁剪）
-
-| 模块 | 包含能力 |
-|------|---------|
-| 📊 仪表盘 | 工作台、数据分析 |
-| ⚙️ 系统管理 | 用户 / 角色 / 菜单 / 部门 / 岗位 / 字典 / 参数 / 公告 / 工单 / 版本 |
-| 👀 监控管理 | 在线用户 / 服务器监控 / 缓存监控 |
-| 📝 日志管理 | 操作日志审计 |
-| 🧰 开发工具 | 接口文档 |
-
-### 扩展模块（默认启用，可用 `ENABLED_MODULES` 裁剪）
-
-| 模块 | 包含能力 | 裁剪开关 |
-|------|---------|---------|
-| 🧩 任务管理 | 定时任务调度 + 可视化工作流编排（内置业务节点） | `task` |
-| 🔧 代码生成器 | 选表 → 生成前后端全量代码 | `generator` |
-| 📁 数据存储 | 统一文件 / 对象存储（SFTP / S3 / OSS / COS / OBS） | `storage` |
-| 🤖 AI 对话 | 基于 Agno 的智能体对话 | `ai` |
-| 💬 内部聊天 | 系统内用户**纯文字**私聊 / 群聊（WebSocket 实时推送 + 未读角标） | `chat` |
-
-## 🔧 模块裁剪
-
-扩展模块可通过 `backend/app/config/setting.py` 中的 `ENABLED_MODULES` 按需启用 / 停用——**移除列表项即可，无需删除任何代码或菜单**，对应的 REST 接口、WebSocket 端点与初始化逻辑将自动不加载：
-
-```python
-# 例如：停用内部聊天与 AI 对话，保留其余扩展模块
-ENABLED_MODULES = ["generator", "task", "storage"]
+## 运行
+```bash
+python main.py run --env=dev
 ```
 
-## 🚦 部署说明
+## 数据库迁移（模型变更时使用）
+```bash
+python main.py revision --env=dev
+python main.py upgrade --env=dev
+```
 
-- **聊天边界**：内部聊天定位为**轻量内部沟通**，仅支持纯文字消息，**不含文件传输、撤回、已读回执、多端同步等 IM 能力**；如有强 IM 需求，请对接企业微信 / 钉钉 / 飞书等成熟产品。随时可在 `ENABLED_MODULES` 中移除 `chat` 停用。
-- **单实例部署**：实时功能（内部聊天 WebSocket、定时任务调度器）基于单实例内存连接与本地调度实现，请以**单实例方式**部署。如需水平扩展，请自行引入 Redis Pub/Sub 或消息队列。
-- **密钥安全**：所有第三方密钥（AI、云存储等）请配置在 `backend/env/.env.*` 环境变量中，**切勿提交到仓库或写入数据库**。
-- **数据库迁移**：正式环境请使用 Alembic 迁移（`uv run alembic upgrade head`）管理表结构变更，`create_all` 仅用于首次初始化的兜底。
+## 插件开发
+项目采用**插件化架构**，建议在 `backend/app/plugin/` 下开发：
 
-## 📷 更多截图
+### 自动路由注册机制
+1. 控制器文件命名为 `controller.py`
+2. 路由自动映射：`module_xxx` → `/xxx`
+3. 系统自动扫描 `plugin/` 下所有 `controller.py` 并注册路由
 
-| 登录 + 拼图验证 | 代码生成 | AI 助手 |
-| ---- | -------- | ------- |
-| ![登录](frontend/web/public/login.png) | ![代码生成](frontend/web/public/gencode.png) | ![AI](frontend/web/public/ai.png) |
+### 开发步骤
+1. 在 `backend/app/plugin/` 下创建 `module_yourfeature/`
+2. 依次编写 `model.py` → `schema.py` → `crud.py` → `service.py` → `controller.py`
+3. 路由自动注册，无需手动配置
 
-> 截图来自当前版本：浅色主题、真实接口数据与最新品牌视觉。
+### 后端约定
+- **日期序列化**：使用 Pydantic `PlainSerializer(..., when_used='json')`，ORM 用 `mode='python'`，JSON/Redis 用 `mode='json'`
+- **统一响应**：使用 `SuccessResponse` 和 `jsonable_encoder`
+- **权限控制**：所有 API 接口需添加 `AuthPermission` 权限控制
+- **日志记录**：关键操作使用 `OperationLogRoute` 记录
 
-## ❓ 常见问题
+# 前端
 
-**Q：启动后登录提示验证码错误？**  
-A：确认后端 Redis 正常，并完成页面拼图验证；开发环境账号为 `admin / 123456`。
+## 配置
+```bash
+cd frontend/web
+cp .env.development.example .env.development
+```
 
-**Q：可以只用 Web 端吗？**  
-A：可以。`frontend/web` 可独立启动；移动端工程独立，不影响 Web。
+## 安装依赖
+```bash
+pnpm install
+```
 
-**Q：如何裁剪模块？**  
-A：修改 `backend/app/config/setting.py` 的 `ENABLED_MODULES`，接口与初始化逻辑会自动卸载。
+## 运行
+```bash
+pnpm run dev
+```
 
-**Q：生产环境数据库怎么初始化？**  
-A：使用 `uv run alembic upgrade head`，不要依赖 `create_all`。
+## 其他脚本
+```bash
+pnpm build            # 生产构建
+pnpm type-check       # TypeScript 检查
+pnpm lint             # ESLint + Prettier + Stylelint
+pnpm clean:cache      # 清理缓存
+```
 
-## 📖 文档地址
+## 新增页面流程
+- 在 `src/api/` 创建对应 API 文件
+- 在 `src/views/` 创建页面组件
+- 路由注册（静态或动态路由）+ 后端菜单配置
+- 路径与 name 保持三者一致
 
-- 🌐 [官网文档](https://service.fastapiadmin.com) — 完整开发指南、架构设计、二开教程
-- 📁 子工程 README：[backend](backend/README.md) · [web](frontend/web/README.md) · [移动端](frontend/app/README.md) · [Docker](docker/README.md)
+# 移动端
 
-## 🤝 参与贡献
+## 配置
+```bash
+cd frontend/app
+cp .env.development.example .env.development
+```
 
-欢迎提交 Issue / PR！详见 [贡献指南](https://service.fastapiadmin.com/about/contributing)。
+## 安装依赖
+```bash
+pnpm install
+```
 
-## 👥 社区与支持
+## 运行
 
-<p>
-<img src="frontend/web/public/group.png" width="200" height="260" style="margin-right:30px"/>
-<img src="frontend/web/public/wechatPay.jpg" width="200" height="260" />
-</p>
+### H5 运行
+```bash
+pnpm run dev:h5 --host
+```
 
-## ⭐ Star History
+### 微信小程序运行
+```bash
+# 启动微信小程序开发服务器
+pnpm run dev:mp-weixin
 
-[![Star History Chart](https://api.star-history.com/svg?repos=fastapiadmin/FastapiAdmin&type=Date)](https://star-history.com/#fastapiadmin/FastapiAdmin&Date)
+# 在微信开发者工具中导入项目目录：dist/dev/mp-weixin
+```
 
-## 👥 贡献者
-> 感谢以下所有给 FastapiAdmin 贡献过代码的 开发者。
+### 其他平台运行
+```bash
+# 启动支付宝小程序开发服务器
+pnpm run dev:mp-alipay
 
-<a href="https://github.com/fastapiadmin/FastapiAdmin/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=fastapiadmin/FastapiAdmin"/>
-</a>
+# 启动百度小程序开发服务器
+pnpm run dev:mp-baidu
 
-## 🙏 鸣谢
+# 启动字节跳动小程序开发服务器
+pnpm run dev:mp-toutiao
 
-> 如果你觉得项目有用，请给一个 ⭐️ Star 支持！
+# 启动 QQ 小程序开发服务器
+pnpm run dev:mp-qq
+```
 
-- 后端：[FastAPI](https://fastapi.tiangolo.com/) · [Pydantic](https://docs.pydantic.dev/) · [SQLAlchemy](https://www.sqlalchemy.org/) · [APScheduler](https://github.com/agronholm/apscheduler)
-- 前端：[Vue3](https://cn.vuejs.org/) · [TypeScript](https://www.typescriptlang.org/) · [Vite](https://vitejs.dev/) · [Element Plus](https://element-plus.org/)
-- 移动端：[UniApp](https://uniapp.dcloud.net.cn/) · [Wot Design Uni](https://wot-ui.cn/)
-- AI：[Agno](https://github.com/agno-agi/agno)
+## 打包发布
+
+### H5 构建
+```
+pnpm run build:h5
+
+# 构建产物在 dist/build/h5 目录
+```
+
+### 微信小程序构建
+```
+pnpm run build:mp-weixin
+
+# 构建产物在 dist/build/mp-weixin 目录
+```
+
+### 其他平台构建
+```
+# 构建支付宝小程序
+pnpm run build:mp-alipay
+
+# 构建百度小程序
+pnpm run build:mp-baidu
+
+# 构建字节跳动小程序
+pnpm run build:mp-toutiao
+
+# 构建 QQ 小程序
+pnpm run build:mp-qq
+```
+
+
+# 交流与赞助
+扫描下面微信二维码添加微信备注 FastapiAdmin 即可进群。
+
+<!-- 使用HTML表格实现并排显示 -->
+<table>
+  <tr>
+    <!-- 第一个图片：个人二维码 -->
+    <td style="text-align:center; padding:10px;">
+ <img src="https://github.com/user-attachments/assets/73466c31-31f6-4c25-af49-47506acb5043" alt="个人二维码" width="300" />
+      <br>
+ </td>
+    <!-- 第二个图片：个人收款码 -->
+ <td style="text-align:center; padding:10px;">
+ <img src="https://github.com/user-attachments/assets/51fb80d0-09cf-4cfc-837b-42e43cbeb70b" alt="个人收款码" width="300" />
+      <br>
+ </td>
+  </tr>
+</table>
+
+
+
