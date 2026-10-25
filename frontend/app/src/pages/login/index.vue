@@ -122,8 +122,8 @@ async function getLoginCaptcha() {
 }
 
 /**
- * wd-slide-verify 拖动到终点触发 success — 调用后端 slider_complete 接口标记验证完成
- * 后端仅标记 captcha_key 状态为 verified，不校验 x 坐标
+ * 拖动到终点触发 success — 调用后端 slider_complete 接口校验拼图位置并标记验证完成
+ * 后端比对拖动位置与 Redis 中保存的目标横坐标（容差 8px）
  */
 async function handleSliderSuccess(position: number) {
   if (!captchaState.key) {

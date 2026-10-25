@@ -19,11 +19,13 @@
     </view>
 
     <view
+      ref="trackRef"
       class="fa-puzzle__track"
       :class="{ 'is-passed': passed, 'is-dragging': dragging }"
       @touchstart.prevent="onTouchStart"
       @touchmove.prevent="onTouchMove"
       @touchend="onTouchEnd"
+      @touchcancel="onTouchEnd"
     >
       <view class="fa-puzzle__fill" :style="{ width: `${fillWidth}%` }" />
       <view class="fa-puzzle__button" :style="{ transform: `translateX(${buttonX}px)` }">
@@ -35,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { getCurrentInstance } from 'vue'
+import { getCurrentInstance, onBeforeUnmount, onMounted } from 'vue'
 
 defineOptions({ name: 'FaPuzzleCaptcha' })
 
@@ -68,12 +70,20 @@ const emit = defineEmits<{
   refresh: []
 }>()
 
+// 单一声明，H5 构建时置为 true（条件编译注释对 tsc 不可见，不能声明两次）
+let isH5 = false
+// #ifdef H5
+isH5 = true
+// #endif
+
 const instance = getCurrentInstance()
+const trackRef = ref<{ $el?: HTMLElement } | HTMLElement | null>(null)
 const progress = ref(0)
 const dragging = ref(false)
 const trackLeft = ref(0)
 const trackWidth = ref(0)
-const buttonSize = 44
+/** 滑块按钮尺寸（px）— CSS 中按钮宽高同为轨道高度，度量轨道时一并取到 */
+const buttonSize = ref(44)
 
 const pieceStyle = computed(() => ({
   left: `${progress.value * (100 - (props.pieceWidth / props.bgWidth) * 100)}%`,
@@ -85,7 +95,7 @@ const pieceStyle = computed(() => ({
 const fillWidth = computed(() => (props.passed ? 100 : progress.value * 100))
 
 const buttonX = computed(() => {
-  const max = Math.max(0, trackWidth.value - buttonSize)
+  const max = Math.max(0, trackWidth.value - buttonSize.value)
   return props.passed ? max : progress.value * max
 })
 
@@ -99,6 +109,8 @@ function measureTrack(): Promise<void> {
         if (box) {
           trackLeft.value = box.left ?? 0
           trackWidth.value = box.width ?? 0
+          if (box.height)
+            buttonSize.value = box.height
         }
         resolve()
       })
@@ -110,29 +122,21 @@ function clamp(value: number): number {
   return Math.min(1, Math.max(0, value))
 }
 
-async function onTouchStart(event: TouchEvent) {
-  if (props.passed || props.loading)
+function updateFromClientX(clientX: number) {
+  if (trackWidth.value <= buttonSize.value)
     return
-  dragging.value = true
-  await measureTrack()
-  updateFromTouch(event)
-}
-
-function onTouchMove(event: TouchEvent) {
-  if (!dragging.value)
-    return
-  updateFromTouch(event)
+  progress.value = clamp((clientX - trackLeft.value - buttonSize.value / 2) / (trackWidth.value - buttonSize.value))
 }
 
 function updateFromTouch(event: TouchEvent) {
   const touch = event.touches?.[0] ?? event.changedTouches?.[0]
-  if (!touch || trackWidth.value <= buttonSize)
+  if (!touch)
     return
-  const clientX = touch.clientX ?? touch.pageX ?? 0
-  progress.value = clamp((clientX - trackLeft.value - buttonSize / 2) / (trackWidth.value - buttonSize))
+  updateFromClientX(touch.clientX ?? touch.pageX ?? 0)
 }
 
-function onTouchEnd() {
+/** 结束拖动：未越过起始阈值则回弹，否则交回父组件做位置校验 */
+function finishDrag() {
   if (!dragging.value)
     return
   dragging.value = false
@@ -143,6 +147,75 @@ function onTouchEnd() {
   const max = Math.max(0, props.bgWidth - props.pieceWidth)
   emit('verify', Math.round(progress.value * max))
 }
+
+function onTouchStart(event: TouchEvent) {
+  // H5 统一走 pointer 事件，避免触摸时 touch/pointer 同时驱动
+  if (isH5)
+    return
+  if (props.passed || props.loading)
+    return
+  dragging.value = true
+  void measureTrack().then(() => updateFromTouch(event))
+}
+
+function onTouchMove(event: TouchEvent) {
+  if (isH5 || !dragging.value)
+    return
+  updateFromTouch(event)
+}
+
+function onTouchEnd() {
+  if (isH5)
+    return
+  finishDrag()
+}
+
+// #ifdef H5
+/** H5 取轨道 DOM 元素（view 在 H5 可能是原生自定义元素或其组件实例） */
+function getTrackElement(): HTMLElement | null {
+  const current = trackRef.value
+  if (!current)
+    return null
+  if (current instanceof HTMLElement)
+    return current
+  return current.$el ?? null
+}
+
+function onPointerDown(event: PointerEvent) {
+  if (props.passed || props.loading)
+    return
+  event.preventDefault()
+  dragging.value = true
+  void measureTrack().then(() => updateFromClientX(event.clientX))
+  window.addEventListener('pointermove', onPointerMove)
+  window.addEventListener('pointerup', onPointerUp, { once: true })
+  window.addEventListener('pointercancel', onPointerUp, { once: true })
+}
+
+function onPointerMove(event: PointerEvent) {
+  if (!dragging.value)
+    return
+  updateFromClientX(event.clientX)
+}
+
+function onPointerUp() {
+  window.removeEventListener('pointermove', onPointerMove)
+  window.removeEventListener('pointerup', onPointerUp)
+  window.removeEventListener('pointercancel', onPointerUp)
+  finishDrag()
+}
+
+onMounted(() => {
+  getTrackElement()?.addEventListener('pointerdown', onPointerDown, { passive: false })
+})
+
+onBeforeUnmount(() => {
+  getTrackElement()?.removeEventListener('pointerdown', onPointerDown)
+  window.removeEventListener('pointermove', onPointerMove)
+  window.removeEventListener('pointerup', onPointerUp)
+  window.removeEventListener('pointercancel', onPointerUp)
+})
+// #endif
 
 function reset() {
   progress.value = 0
