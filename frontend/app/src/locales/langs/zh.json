@@ -119,7 +119,9 @@
     "wxOnly": "请在微信小程序中使用此功能",
     "wxAuthFailed": "微信登录授权失败",
     "phoneCodeFailed": "手机号授权码获取失败",
-    "puzzleText": "拖动滑块，使图块与缺口重合"
+    "puzzleText": "按住滑块，拖动完成拼图",
+    "puzzleTitle": "拖动滑块，使图块与缺口重合",
+    "puzzleEntry": "点击完成拼图"
   },
   "register": {
     "navTitle": "注册",

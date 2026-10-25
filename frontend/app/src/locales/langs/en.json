@@ -119,7 +119,9 @@
     "wxOnly": "This feature is only available in the WeChat Mini Program",
     "wxAuthFailed": "WeChat login authorization failed",
     "phoneCodeFailed": "Failed to get phone number authorization code",
-    "puzzleText": "Drag the slider to fit the piece into the gap"
+    "puzzleText": "Hold and drag the slider to complete the puzzle",
+    "puzzleTitle": "Drag the slider to fit the piece into the gap",
+    "puzzleEntry": "Click to complete the puzzle"
   },
   "register": {
     "navTitle": "Register",

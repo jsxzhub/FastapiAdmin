@@ -16,7 +16,7 @@ useI18nNavTitle('login.navTitle')
 
 const { t } = useI18n()
 const loginFormRef = ref()
-const sliderCaptchaRef = ref<{ reset?: () => void }>()
+const sliderCaptchaRef = ref<{ reset?: () => void, open?: () => void }>()
 const loading = ref(false)
 const userStore = useUserStore()
 const configStore = useConfigStore()
@@ -119,6 +119,14 @@ async function getLoginCaptcha() {
     console.error('验证码获取失败', e)
     captchaState.enable = false
   }
+}
+
+/**
+ * 点击拼图入口：换一张新题后再展开弹层（与 web 端 handlePuzzleRequest 一致）
+ */
+async function handlePuzzleRequest() {
+  await getLoginCaptcha()
+  sliderCaptchaRef.value?.open?.()
 }
 
 /**
@@ -263,7 +271,7 @@ function goForget() {
           />
         </wd-form-item>
 
-        <!-- Slider Captcha — wd-slide-verify 滑块拖动验证（条件显示） -->
+        <!-- 拼图滑块验证：点击入口展开弹层，拖动图块到缺口（与 web 端一致） -->
         <wd-form-item v-if="captchaState.enable" custom-style="margin-bottom: 14rpx; padding-left: 0; padding-right: 0;">
           <FaPuzzleCaptcha
             ref="sliderCaptchaRef"
@@ -277,8 +285,11 @@ function goForget() {
             :passed="sliderPassed"
             :loading="loading"
             :text="t('login.puzzleText')"
+            :title-text="t('login.puzzleTitle')"
             :success-text="t('login.sliderSuccessText')"
+            :entry-text="t('login.puzzleEntry')"
             @verify="handleSliderSuccess"
+            @request="handlePuzzleRequest"
             @refresh="getLoginCaptcha"
           />
         </wd-form-item>

@@ -1,37 +1,54 @@
-<!-- 小程序滑块拼图：背景 + Logo 图块，拖动到位后交给后端校验 -->
+<!-- 小程序滑块拼图：点击入口展开弹层，拖动图块到位后交给后端校验 -->
 <template>
-  <view class="fa-puzzle">
-    <view class="fa-puzzle__stage">
-      <image v-if="bgImage" class="fa-puzzle__bg" :src="bgImage" mode="scaleToFill" />
-      <image
-        v-if="pieceImage"
-        class="fa-puzzle__piece"
-        :src="pieceImage"
-        mode="scaleToFill"
-        :style="pieceStyle"
-      />
-      <view class="fa-puzzle__refresh" @click.stop="emit('refresh')">
-        <wd-icon name="refresh" size="16px" />
-      </view>
-      <view v-if="loading" class="fa-puzzle__mask">
-        <wd-loading size="20px" />
-      </view>
+  <view class="fa-puzzle" :class="{ 'is-passed': passed }">
+    <!-- 入口：与 web 端一致，点击后换题并展开拼图弹层 -->
+    <view class="fa-puzzle__entry" @click="requestPanel">
+      <wd-icon :name="passed ? 'check' : 'lock'" size="16px" />
+      <text class="fa-puzzle__entry-text">{{ passed ? successText : entryText }}</text>
+      <wd-icon v-if="!passed" name="arrow-right" size="14px" class="fa-puzzle__entry-arrow" />
     </view>
 
-    <view
-      ref="trackRef"
-      class="fa-puzzle__track"
-      :class="{ 'is-passed': passed, 'is-dragging': dragging }"
-      @touchstart.prevent="onTouchStart"
-      @touchmove.prevent="onTouchMove"
-      @touchend="onTouchEnd"
-      @touchcancel="onTouchEnd"
-    >
-      <view class="fa-puzzle__fill" :style="{ width: `${fillWidth}%` }" />
-      <view class="fa-puzzle__button" :style="{ transform: `translateX(${buttonX}px)` }">
-        <wd-icon :name="passed ? 'check' : 'double-right'" size="20px" />
+    <!-- 弹层：v-show 保留轨道 DOM，H5 的 pointerdown 监听在 mounted 时即可绑定 -->
+    <view v-show="panelOpen" class="fa-puzzle__overlay" @click="closePanel">
+      <view class="fa-puzzle__dialog" @click.stop>
+        <view class="fa-puzzle__close" @click="closePanel">
+          <wd-icon name="close" size="18px" />
+        </view>
+        <text class="fa-puzzle__title">{{ titleText }}</text>
+
+        <view class="fa-puzzle__stage">
+          <image v-if="bgImage" class="fa-puzzle__bg" :src="bgImage" mode="scaleToFill" />
+          <image
+            v-if="pieceImage"
+            class="fa-puzzle__piece"
+            :src="pieceImage"
+            mode="scaleToFill"
+            :style="pieceStyle"
+          />
+          <view class="fa-puzzle__refresh" @click.stop="emit('refresh')">
+            <wd-icon name="refresh" size="16px" />
+          </view>
+          <view v-if="loading" class="fa-puzzle__mask">
+            <wd-loading size="20px" />
+          </view>
+        </view>
+
+        <view
+          ref="trackRef"
+          class="fa-puzzle__track"
+          :class="{ 'is-passed': passed, 'is-dragging': dragging }"
+          @touchstart.prevent="onTouchStart"
+          @touchmove.prevent="onTouchMove"
+          @touchend="onTouchEnd"
+          @touchcancel="onTouchEnd"
+        >
+          <view class="fa-puzzle__fill" :style="{ width: `${fillWidth}%` }" />
+          <view class="fa-puzzle__button" :style="{ transform: `translateX(${buttonX}px)` }">
+            <wd-icon :name="passed ? 'check' : 'double-right'" size="20px" />
+          </view>
+          <text class="fa-puzzle__text">{{ passed ? successText : text }}</text>
+        </view>
       </view>
-      <text class="fa-puzzle__text">{{ passed ? successText : text }}</text>
     </view>
   </view>
 </template>
@@ -52,7 +69,9 @@ interface Props {
   passed?: boolean
   loading?: boolean
   text: string
+  titleText: string
   successText: string
+  entryText: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -68,6 +87,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   verify: [position: number]
   refresh: []
+  request: []
 }>()
 
 // 单一声明，H5 构建时置为 true（条件编译注释对 tsc 不可见，不能声明两次）
@@ -78,6 +98,7 @@ isH5 = true
 
 const instance = getCurrentInstance()
 const trackRef = ref<{ $el?: HTMLElement } | HTMLElement | null>(null)
+const panelOpen = ref(false)
 const progress = ref(0)
 const dragging = ref(false)
 const trackLeft = ref(0)
@@ -222,17 +243,112 @@ function reset() {
   dragging.value = false
 }
 
+/** 点击入口：交给父组件换一张新题，再回调 open() 展开弹层（与 web 端一致） */
+function requestPanel() {
+  if (props.loading)
+    return
+  emit('request')
+}
+
+function openPanel() {
+  if (props.loading)
+    return
+  panelOpen.value = true
+}
+
+function closePanel() {
+  panelOpen.value = false
+  reset()
+}
+
 watch(
   () => props.bgImage,
   () => reset(),
 )
 
-defineExpose({ reset })
+watch(
+  () => props.passed,
+  (value) => {
+    if (value)
+      setTimeout(closePanel, 700)
+  },
+)
+
+defineExpose({ reset, open: openPanel })
 </script>
 
 <style scoped lang="scss">
 .fa-puzzle {
   width: 100%;
+}
+
+.fa-puzzle__entry {
+  display: flex;
+  gap: 12rpx;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 88rpx;
+  padding: 0 28rpx;
+  font-size: 28rpx;
+  color: var(--fa-text-secondary, #5b6472);
+  background: #fff;
+  border: 2rpx solid var(--fa-border, #e6e8ec);
+  border-radius: var(--fa-radius-sm, 16rpx);
+}
+
+.fa-puzzle__entry-text {
+  flex: 1;
+}
+
+.fa-puzzle__entry-arrow {
+  opacity: 0.55;
+}
+
+.fa-puzzle.is-passed .fa-puzzle__entry {
+  color: var(--wot-success-5, #22c55e);
+  border-color: var(--wot-success-5, #22c55e);
+}
+
+.fa-puzzle__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 45%);
+}
+
+.fa-puzzle__dialog {
+  position: relative;
+  box-sizing: border-box;
+  width: 620rpx;
+  max-width: 90vw;
+  padding: 36rpx 28rpx 28rpx;
+  background: #fff;
+  border-radius: 24rpx;
+}
+
+.fa-puzzle__close {
+  position: absolute;
+  top: 16rpx;
+  right: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  color: var(--fa-text-secondary, #5b6472);
+}
+
+.fa-puzzle__title {
+  display: block;
+  margin-bottom: 20rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--fa-text-primary, #1f2937);
+  text-align: center;
 }
 
 .fa-puzzle__stage {
@@ -328,6 +444,19 @@ defineExpose({ reset })
   font-size: 26rpx;
   color: var(--fa-text-secondary, #5b6472);
   pointer-events: none;
+}
+
+.wot-theme-dark .fa-puzzle__entry {
+  background: #15181e;
+  border-color: #262b34;
+}
+
+.wot-theme-dark .fa-puzzle__dialog {
+  background: #15181e;
+}
+
+.wot-theme-dark .fa-puzzle__title {
+  color: #e5e7eb;
 }
 
 .wot-theme-dark .fa-puzzle__track {
