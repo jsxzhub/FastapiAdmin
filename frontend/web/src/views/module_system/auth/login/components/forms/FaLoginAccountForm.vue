@@ -85,7 +85,7 @@
               :success-text="$t('login.sliderSuccessText')"
               :close-text="$t('common.closeAction')"
               :entry-text="$t('login.puzzleEntry')"
-              @verify="(pos) => emit('sliderPass', pos)"
+              @verify="(pos: number) => emit('sliderPass', pos)"
               @request="emit('requestPuzzle')"
               @refresh="emit('getCaptcha')"
             />
