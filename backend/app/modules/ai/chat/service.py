@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any
 
+import httpx
 from agno.session.team import TeamSession
 from redis.asyncio import Redis
 
