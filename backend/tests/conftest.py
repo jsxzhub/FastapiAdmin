@@ -25,6 +25,7 @@ from fastapi.testclient import TestClient
 
 _TEST_DB_PATH = tempfile.NamedTemporaryFile(suffix=".db", delete=False).name
 
+os.environ["ENVIRONMENT"] = "dev"  # 测试固定 dev，避免加载 .env.prod / 启用生产中间件
 os.environ["DATABASE_TYPE"] = "sqlite"
 os.environ["DATABASE_NAME"] = _TEST_DB_PATH
 os.environ["POOL_SIZE"] = "1"

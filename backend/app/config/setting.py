@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     """系统配置类"""
 
     model_config = SettingsConfigDict(
-        env_file=ENV_DIR / f".env.{os.getenv('ENVIRONMENT')}",
+        env_file=ENV_DIR / f".env.{os.getenv('ENVIRONMENT', 'prod')}",
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=True,  # 区分大小写
@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # ================================================= #
     # ******************* 项目环境 ****************** #
     # ================================================= #
-    ENVIRONMENT: EnvironmentEnum = EnvironmentEnum.DEV
+    ENVIRONMENT: EnvironmentEnum = EnvironmentEnum.PROD
 
     # ================================================= #
     # ******************* AI 智能体开关 ****************** #
@@ -421,7 +421,8 @@ class Settings(BaseSettings):
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    return Settings(_env_file=ENV_DIR / f".env.{os.getenv('ENVIRONMENT', 'dev')}")  # pyright: ignore[reportCallIssue]
+    # 未显式指定时按生产环境加载；本地开发请用 main.py run --env=dev
+    return Settings(_env_file=ENV_DIR / f".env.{os.getenv('ENVIRONMENT', 'prod')}")  # pyright: ignore[reportCallIssue]
 
 
 settings = get_settings()
