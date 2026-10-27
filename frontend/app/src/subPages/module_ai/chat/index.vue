@@ -324,13 +324,13 @@ onLoad(() => {
               />
             </view>
             <template v-if="!collapsedGroups.has(group.key)">
-              <view v-for="s in group.list" :key="s.id" class="admin-card">
+              <view v-for="s in group.list" :key="s.id" class="admin-card" @click="selectSession(s.id, s.title)">
                 <wd-cell
                   :title="s.title || s.session_name || t('chat.untitled')"
                   :label="formatSessionTime(s.updated_at ?? s.created_at)"
                   center
+                  clickable
                   :class="currentSession === s.id ? 'wot-text-primary-6' : ''"
-                  @click="selectSession(s.id, s.title)"
                 >
                   <template #default>
                     <view class="flex items-center gap-sm">
