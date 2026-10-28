@@ -4,7 +4,7 @@
   - 暴露 `elTableRef`、`scrollToTop`；formatter 列见 TableFormatterOutlet 注释。
 -->
 <template>
-  <div class="fa-table" :class="{ 'is-empty': isEmpty }">
+  <div class="fa-table" :class="{ 'is-empty': isEmpty, 'no-pagination': !showPagination }">
     <div class="fa-table__main">
       <!-- 初始加载骨架屏：仅在 loading 且无数据时显示 -->
       <div v-if="loading && isEmpty" class="fa-table-skeleton">
@@ -185,6 +185,8 @@ import {
   isVNode,
   h,
   defineComponent,
+  onMounted,
+  onBeforeUnmount,
   type PropType,
 } from "vue";
 import { useI18n } from "vue-i18n";
@@ -632,6 +634,49 @@ const onExpandChange = (row: Record<string, unknown>, expandedRows: Record<strin
 // 是否显示分页器
 const showPagination = computed(() => !!props.pagination);
 
+// 无分页树形表：最后一条“可见”行不画底边；隐藏行可能排在最后，不能只靠 :last-child
+let lastRowObserver: MutationObserver | null = null;
+let lastRowFrame = 0;
+const markLastVisibleRow = () => {
+  const table = elTableRef.value?.$el as HTMLElement | undefined;
+  if (!table || showPagination.value) return;
+  const rows = table.querySelectorAll<HTMLElement>(".el-table__body tr");
+  let lastVisible: HTMLElement | undefined;
+  rows.forEach((row) => {
+    row.classList.remove("fa-table-last-visible-row");
+    if (row.getClientRects().length > 0) lastVisible = row;
+  });
+  lastVisible?.classList.add("fa-table-last-visible-row");
+};
+const scheduleMarkLastRow = () => {
+  cancelAnimationFrame(lastRowFrame);
+  lastRowFrame = requestAnimationFrame(markLastVisibleRow);
+};
+onMounted(() => {
+  nextTick(() => {
+    const table = elTableRef.value?.$el as HTMLElement | undefined;
+    if (!table) return;
+    lastRowObserver = new MutationObserver(scheduleMarkLastRow);
+    lastRowObserver.observe(table, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["style"],
+    });
+    scheduleMarkLastRow();
+  });
+});
+onBeforeUnmount(() => {
+  lastRowObserver?.disconnect();
+  lastRowObserver = null;
+  cancelAnimationFrame(lastRowFrame);
+});
+watch(
+  () => [props.data, props.loading, props.pagination?.current, props.pagination?.size],
+  () => nextTick(scheduleMarkLastRow),
+  { deep: false }
+);
+
 // Element Plus 在部分场景会先用 $index = -1 进行预渲染。
 // 这对普通展示无影响，但会让 ElForm 错误注册出 lineList.-1.xxx 这类字段。
 const shouldRenderSlotScope = (slotScope: { $index?: number }) => {
@@ -860,6 +905,28 @@ defineExpose({
 <style lang="scss" scoped>
 .fa-table {
   position: relative;
+  /* 无分页时不需要“表格 → 分页”的分隔线；覆盖普通/固定列/树形表最后一行 */
+  &.no-pagination {
+    :deep(.el-table__body tr:last-child > td),
+    :deep(.el-table__body tr:last-child > th),
+    :deep(.el-table__row:last-child > td) {
+      border-bottom: 0 !important;
+      box-shadow: none !important;
+    }
+
+    :deep(.el-table__inner-wrapper::before),
+    :deep(.el-table__inner-wrapper::after),
+    :deep(.el-table__body-wrapper::after) {
+      content: none !important;
+    }
+
+    /* 树形表/折叠行会在可见行后保留隐藏行，:last-child 不一定是最后可见行 */
+    :deep(.fa-table-last-visible-row > td) {
+      border-bottom: 0 !important;
+      box-shadow: none !important;
+    }
+  }
+
   display: flex;
   flex: 1;
   flex-direction: column;

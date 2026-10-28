@@ -90,3 +90,4 @@ skills-lock.json
 backend/*.sql
 backend/sql/**/*.sql
 *.dump
+tmp

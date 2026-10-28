@@ -1,5 +1,6 @@
 import io
 import os
+import uuid
 import re
 import zipfile
 from collections.abc import Callable
@@ -626,6 +627,33 @@ class GenTableService:
                     preview_code_result[out_key] = f"渲染错误: {e!s}"
         return preview_code_result
 
+    async def _write_plugin_migration(self, gen_table_schema: GenTableOutSchema) -> None:
+        """为生成的插件写一个受控的空迁移，避免 dev 自动迁移产生多 head。
+
+        生成的插件模型映射的是**已经存在的物理表**，因此不能在这里 create_table/alter；
+        迁移只负责把插件纳入 Alembic 版本链，实际的表结构由原库维护。
+        """
+        from alembic import command
+        from alembic.config import Config
+        from alembic.script import ScriptDirectory
+
+        alembic_cfg = Config(str(BASE_DIR / "alembic.ini"))
+        script = ScriptDirectory.from_config(alembic_cfg)
+        heads = script.get_heads()
+        if len(heads) > 1:
+            raise CustomException(msg="迁移存在多个 head，无法为生成插件创建受控迁移")
+        down_revision = heads[0] if heads else None
+        table_name = (gen_table_schema.table_name or "").strip()
+        rev_id = f"gen_{table_name}_{uuid.uuid4().hex[:8]}"[:32]
+        command.revision(
+            alembic_cfg,
+            message=f"codegen plugin {table_name}",
+            head=down_revision,
+            rev_id=rev_id,
+            autogenerate=False,
+        )
+        logger.info(f"代码生成：已创建插件受控迁移 {rev_id}")
+
     @handle_service_exception
     async def generate_code(self, table_name: str) -> bool:
         """生成代码至指定路径（安全写入+可跳过覆盖）。
@@ -742,6 +770,9 @@ class GenTableService:
                 reference_ctx=sub_reference_ctx,
                 dynamic_values=dynamic_values,
             )
+
+        # 生成插件的迁移由这里统一控制；不能让 dev 自动 autogenerate 再生成一份
+        await self._write_plugin_migration(gen_table_schema)
 
         # 2. 代码成功写入后，再创建菜单（避免失败时产生孤儿菜单数据）
         menu_crud = MenuCRUD(self.auth, self.db)

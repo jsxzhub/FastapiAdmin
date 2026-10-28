@@ -90,6 +90,13 @@ def run_migrations_online() -> None:
                 return parent_names["schema_qualified_table_name"] in target_metadata.tables
             return True
 
+        def include_object(obj, name, type_, reflected, compare_to) -> bool:
+            # 代码生成插件使用物理表，迁移由 codegen 单独生成空迁移控制；
+            # 不参与自动 autogenerate，避免生成 create_table/alter 冲突迁移。
+            if type_ == "table" and getattr(obj, "info", {}).get("generated_plugin"):
+                return False
+            return True
+
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
@@ -98,6 +105,7 @@ def run_migrations_online() -> None:
             render_as_batch=True,  # SQLite 不支持部分 ALTER，须走 batch 重建；对 MySQL/PG 无影响
             transaction_per_migration=True,
             include_name=include_name,
+            include_object=include_object,
             process_revision_directives=process_revision_directives,
         )
         context.run_migrations()

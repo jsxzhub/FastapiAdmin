@@ -696,6 +696,13 @@ class Jinja2TemplateUtil:
                         import_list.add(f"from sqlalchemy import {pk_type_import}")
                 continue
             if column.column_type:
+                sa_type = cls.get_sqlalchemy_type(column)
+                # ARRAY(item) 的 item 也必须导入，否则生成模型 import 失败（PG text[]/int[]）
+                if sa_type.startswith("ARRAY("):
+                    import_list.add("from sqlalchemy import ARRAY")
+                    item_type = sa_type[6:-1].split("(", 1)[0].strip()
+                    if item_type:
+                        import_list.add(f"from sqlalchemy import {item_type}")
                 data_type = cls.get_db_type(column.column_type)
                 # 非顶层导出的类型（JSONB/INET/CIDR/MACADDR/BIT/TSVECTOR/TSQUERY/Geometry 等）
                 # 走明确的模块映射，绝不再拼 `from sqlalchemy import <方言类型>`（非法语句）

@@ -394,7 +394,7 @@ function buildFlowRowActions(
 
 function formatFlowOperationCell(row: FlowTable, ctx: Parameters<typeof buildFlowRowActions>[1]) {
   return renderTableOperationCell(buildFlowRowActions(row, ctx), {
-    wrapperClass: "inline-flex flex-wrap items-center justify-end gap-1 flow-table-actions",
+    wrapperClass: "inline-flex flex-wrap items-center justify-end gap-1 flow-table-actions align-middle",
   });
 }
 
@@ -660,7 +660,7 @@ const {
       {
         prop: "task_type",
         label: "类型",
-        width: 90,
+        width: 130,
         formatter: (row: FlowTable) =>
           h(
             ElTag,
@@ -675,7 +675,7 @@ const {
       {
         prop: "targets",
         label: "目标节点",
-        minWidth: 170,
+        minWidth: 220,
         formatter: (row: FlowTable) => {
           const targets = row.targets || [];
           if (targets.length === 0) return "—";
@@ -751,7 +751,7 @@ const {
       {
         prop: "operation",
         label: "操作",
-        width: 180,
+        width: 200,
         fixed: "right",
         align: "center",
         formatter: (row: FlowTable) => formatFlowOperationCell(row, opCtx),

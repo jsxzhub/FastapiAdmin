@@ -6,7 +6,7 @@ from decimal import Decimal
 import pytest
 
 from app.core.exceptions import CustomException
-from app.modules.dbconsole.sql_guard import (
+from app.modules.ops.dbconsole.sql_guard import (
     assert_read_only,
     is_read_only,
     is_single_statement,

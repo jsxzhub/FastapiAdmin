@@ -4,7 +4,7 @@ from sqlalchemy.engine import make_url
 
 from app.config.db_url import build_redis_url
 from app.config.setting import Settings
-from app.modules.dbconsole.service import build_url
+from app.modules.ops.dbconsole.service import build_url
 
 
 def test_settings_url_handles_password_special_chars() -> None:

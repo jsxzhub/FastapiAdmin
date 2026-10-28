@@ -9,9 +9,9 @@ from sqlalchemy.engine import make_url
 
 from app.config.db_url import build_redis_url
 from app.core.exceptions import CustomException
-from app.modules.dbconsole import service as service_module
-from app.modules.dbconsole.schema import DbConnectionCreateSchema, DbConnectionUpdateSchema
-from app.modules.dbconsole.service import DbConsoleService, build_url
+from app.modules.ops.dbconsole import service as service_module
+from app.modules.ops.dbconsole.schema import DbConnectionCreateSchema, DbConnectionUpdateSchema
+from app.modules.ops.dbconsole.service import DbConsoleService, build_url
 from app.utils.crypto_util import CryptoUtil
 
 

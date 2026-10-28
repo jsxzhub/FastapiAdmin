@@ -13,10 +13,10 @@ CREATE TEMPORARY TABLE tmp_ops_menu_buttons (
 );
 
 INSERT INTO tmp_ops_menu_buttons (parent_title, name, permission, ord, description) VALUES
-('SQL 控制台', '新增连接', 'module_dbconsole:conn:create', 1, 'SQL 控制台新增外部数据库连接'),
-('SQL 控制台', '修改连接', 'module_dbconsole:conn:update', 2, 'SQL 控制台修改外部数据库连接'),
-('SQL 控制台', '删除连接', 'module_dbconsole:conn:delete', 3, 'SQL 控制台删除外部数据库连接'),
-('SQL 控制台', '执行查询', 'module_dbconsole:query:execute', 4, 'SQL 控制台执行只读查询或确认写'),
+('SQL 控制台', '新增连接', 'module_ops:dbconsole:conn:create', 1, 'SQL 控制台新增外部数据库连接'),
+('SQL 控制台', '修改连接', 'module_ops:dbconsole:conn:update', 2, 'SQL 控制台修改外部数据库连接'),
+('SQL 控制台', '删除连接', 'module_ops:dbconsole:conn:delete', 3, 'SQL 控制台删除外部数据库连接'),
+('SQL 控制台', '执行查询', 'module_ops:dbconsole:query:execute', 4, 'SQL 控制台执行只读查询或确认写'),
 ('SSH 运维', '新增主机', 'module_ops:ssh:create', 1, 'SSH 运维新增主机'),
 ('SSH 运维', '修改主机', 'module_ops:ssh:update', 2, 'SSH 运维修改主机'),
 ('SSH 运维', '删除主机', 'module_ops:ssh:delete', 3, 'SSH 运维删除主机'),

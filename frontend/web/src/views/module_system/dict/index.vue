@@ -485,8 +485,18 @@ watch(data, (newData) => {
 
 .dict-data-card {
   box-sizing: border-box;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
   height: 100%;
   padding: 12px 16px;
+}
+
+/* 让字典数据面板和内部表格填满右侧卡片，与常规列表页保持一致的固定表格区 */
+.dict-data-card :deep(.dict-data-panel) {
+  flex: 1;
+  min-height: 0;
 }
 
 /* 面板内筛选 */

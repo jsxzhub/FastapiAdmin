@@ -576,7 +576,7 @@ const {
       {
         prop: "operation",
         label: "操作",
-        width: 250,
+        width: 200,
         fixed: "right",
         align: "center",
         formatter: (row: NodeTable) => formatNodeOperationCell(row),

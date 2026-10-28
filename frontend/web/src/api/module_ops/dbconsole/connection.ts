@@ -1,6 +1,6 @@
 import { request } from "@utils";
 
-const API_PATH = "/dbconsole/connection";
+const API_PATH = "/ops/dbconsole/connection";
 
 export interface DbConnection {
   id: number;

@@ -27,10 +27,10 @@ def test_detail_permissions_exist() -> None:
 def test_ops_permission_buttons_exist() -> None:
     permissions = {n.get("permission") for n in _walk(json.loads(MENU_SEED.read_text(encoding="utf-8")))}
     expected = {
-        "module_dbconsole:conn:create",
-        "module_dbconsole:conn:update",
-        "module_dbconsole:conn:delete",
-        "module_dbconsole:query:execute",
+        "module_ops:dbconsole:conn:create",
+        "module_ops:dbconsole:conn:update",
+        "module_ops:dbconsole:conn:delete",
+        "module_ops:dbconsole:query:execute",
         "module_ops:ssh:create",
         "module_ops:ssh:update",
         "module_ops:ssh:delete",

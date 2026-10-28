@@ -517,6 +517,8 @@ watch(
   [() => props.visible, () => props.flow],
   ([visible, flow]) => {
     if (!visible) return;
+    // 节点可能在另一个页面刚创建；每次打开设计器都重新拉取存储源，避免使用旧列表
+    void loadSources();
     if (flow) {
       formData.value = { name: flow.name || "", description: flow.description || "" };
       // 节点/连线数据由后端详情接口补全存储源字段，直接回显

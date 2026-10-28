@@ -451,7 +451,7 @@ const {
       {
         prop: "operation",
         label: "操作",
-        width: 220,
+        width: 200,
         fixed: "right",
         align: "center",
         formatter: (row: DictDataTable) => formatDictDataOperationCell(row),

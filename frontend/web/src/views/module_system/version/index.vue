@@ -330,7 +330,7 @@ const {
       {
         prop: "operation",
         label: "操作",
-        width: 340,
+        width: 200,
         fixed: "right",
         align: "center",
         formatter: (row: VersionTable) => renderVersionOperationCell(row),

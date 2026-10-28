@@ -4,7 +4,7 @@ from fastapi import APIRouter
 
 from app.modules.ai.chat.controller import ChatRouter
 from app.modules.common.file.controller import FileRouter
-from app.modules.dbconsole.controller import DbConsoleRouter
+from app.modules.ops.dbconsole.controller import DbConsoleRouter
 from app.modules.generator.gencode.controller import GenRouter
 from app.modules.monitor.cache.controller import CacheRouter
 from app.modules.monitor.health.controller import HealthRouter
@@ -63,8 +63,7 @@ DOMAIN_CONTROLLERS: dict[str, list[APIRouter]] = {
     "/ai": [ChatRouter],
     "/generator": [GenRouter],
     "/common": [FileRouter],
-    "/dbconsole": [DbConsoleRouter],
-    "/ops": [SshRouter],
+    "/ops": [SshRouter, DbConsoleRouter],
 }
 
 api_v1 = APIRouter()

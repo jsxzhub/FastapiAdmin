@@ -62,9 +62,11 @@
         </ElRow>
       </div>
 
-      <!-- 空状态：有 #empty 插槽时整块替换，避免叠加默认 ElEmpty -->
-      <slot v-if="$slots.empty" name="empty" />
-      <FaEmptyState v-else icon="ri:inbox-line" :title="emptyText" />
+      <!-- 空状态：有数据时不能渲染，否则会盖在卡片上显示“暂无数据” -->
+      <template v-if="isEmpty">
+        <slot v-if="$slots.empty" name="empty" />
+        <FaEmptyState v-else icon="ri:inbox-line" :title="emptyText" />
+      </template>
     </ElScrollbar>
 
     <!-- 分页 -->

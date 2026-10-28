@@ -32,6 +32,7 @@
  */
 
 import { SystemThemeEnum } from "@/enums/appEnum";
+import { ThemeMode } from "@/enums/settings/theme.enum";
 import type { SystemThemeTypes } from "@/types/store";
 import { useSettingsStore } from "@stores";
 import AppConfig from "@/config";
@@ -73,7 +74,8 @@ export function useTheme() {
     const currentTheme = AppConfig.systemThemeStyles[theme as keyof SystemThemeTypes];
 
     if (currentTheme) {
-      el.setAttribute("class", currentTheme.className);
+      // 只切换 dark，不要用 setAttribute 清空 html 上的其他状态类
+      el.classList.toggle("dark", isDark);
     }
 
     // 设置按钮颜色加深或变浅
@@ -142,10 +144,13 @@ export function initializeTheme() {
       settingStore.systemThemeType = actualTheme;
     }
 
+    // 同步旧 theme 状态，避免持久化的旧值在刷新后覆盖当前主题
+    settingStore.theme = actualTheme === SystemThemeEnum.DARK ? ThemeMode.DARK : ThemeMode.LIGHT;
+
     // 设置主题 class
     const currentTheme = AppConfig.systemThemeStyles[actualTheme as keyof SystemThemeTypes];
     if (currentTheme) {
-      el.setAttribute("class", currentTheme.className);
+      el.classList.toggle("dark", actualTheme === SystemThemeEnum.DARK);
     }
 
     // 设置主题颜色

@@ -22,12 +22,12 @@ from .schema import (
 )
 from .service import DbConsoleService
 
-DbConsoleRouter = APIRouter(route_class=OperationLogRoute, prefix="/connection", tags=["SQL控制台"])
+DbConsoleRouter = APIRouter(route_class=OperationLogRoute, prefix="/dbconsole/connection", tags=["SQL控制台"])
 
 
 @DbConsoleRouter.get("/list", summary="查询数据库连接列表", response_model=ResponseSchema[list[DbConnectionOutSchema]])
 async def list_db_connection_controller(
-    auth: Annotated[AuthSchema, Security(AuthPermission(["module_dbconsole:conn:query"]))],
+    auth: Annotated[AuthSchema, Security(AuthPermission(["module_ops:dbconsole:conn:query"]))],
     db: Annotated[AsyncSession, Depends(db_getter)],
 ) -> JSONResponse:
     result = await DbConsoleService(auth, db).get_list()
@@ -36,7 +36,7 @@ async def list_db_connection_controller(
 
 @DbConsoleRouter.get("/detail/{id}", summary="查询数据库连接详情", response_model=ResponseSchema[DbConnectionOutSchema])
 async def detail_db_connection_controller(
-    auth: Annotated[AuthSchema, Security(AuthPermission(["module_dbconsole:conn:query"]))],
+    auth: Annotated[AuthSchema, Security(AuthPermission(["module_ops:dbconsole:conn:query"]))],
     db: Annotated[AsyncSession, Depends(db_getter)],
     id: Annotated[int, Path(description="连接ID", ge=1)],
 ) -> JSONResponse:
@@ -46,7 +46,7 @@ async def detail_db_connection_controller(
 
 @DbConsoleRouter.post("/create", status_code=status.HTTP_201_CREATED, summary="新增数据库连接", response_model=ResponseSchema[DbConnectionOutSchema])
 async def create_db_connection_controller(
-    auth: Annotated[AuthSchema, Security(AuthPermission(["module_dbconsole:conn:create"]))],
+    auth: Annotated[AuthSchema, Security(AuthPermission(["module_ops:dbconsole:conn:create"]))],
     db: Annotated[AsyncSession, Depends(db_getter)],
     data: Annotated[DbConnectionCreateSchema, Body(description="连接配置")],
 ) -> JSONResponse:
@@ -56,7 +56,7 @@ async def create_db_connection_controller(
 
 @DbConsoleRouter.put("/update/{id}", summary="修改数据库连接", response_model=ResponseSchema[DbConnectionOutSchema])
 async def update_db_connection_controller(
-    auth: Annotated[AuthSchema, Security(AuthPermission(["module_dbconsole:conn:update"]))],
+    auth: Annotated[AuthSchema, Security(AuthPermission(["module_ops:dbconsole:conn:update"]))],
     db: Annotated[AsyncSession, Depends(db_getter)],
     id: Annotated[int, Path(description="连接ID", ge=1)],
     data: Annotated[DbConnectionUpdateSchema, Body(description="连接配置")],
@@ -67,7 +67,7 @@ async def update_db_connection_controller(
 
 @DbConsoleRouter.delete("/delete", summary="删除数据库连接", response_model=ResponseSchema[None])
 async def delete_db_connection_controller(
-    auth: Annotated[AuthSchema, Security(AuthPermission(["module_dbconsole:conn:delete"]))],
+    auth: Annotated[AuthSchema, Security(AuthPermission(["module_ops:dbconsole:conn:delete"]))],
     db: Annotated[AsyncSession, Depends(db_getter)],
     ids: Annotated[list[int], Body(description="连接ID列表")],
 ) -> JSONResponse:
@@ -77,7 +77,7 @@ async def delete_db_connection_controller(
 
 @DbConsoleRouter.post("/test", summary="按填写中的凭据测试连接（不落库）", response_model=ResponseSchema[bool])
 async def test_db_connection_config_controller(
-    auth: Annotated[AuthSchema, Security(AuthPermission(["module_dbconsole:conn:update"]))],
+    auth: Annotated[AuthSchema, Security(AuthPermission(["module_ops:dbconsole:conn:update"]))],
     db: Annotated[AsyncSession, Depends(db_getter)],
     data: Annotated[DbConnectionTestSchema, Body(description="连接配置")],
 ) -> JSONResponse:
@@ -87,7 +87,7 @@ async def test_db_connection_config_controller(
 
 @DbConsoleRouter.post("/test/{id}", summary="测试已保存的连接", response_model=ResponseSchema[bool])
 async def test_db_connection_controller(
-    auth: Annotated[AuthSchema, Security(AuthPermission(["module_dbconsole:conn:query"]))],
+    auth: Annotated[AuthSchema, Security(AuthPermission(["module_ops:dbconsole:conn:query"]))],
     db: Annotated[AsyncSession, Depends(db_getter)],
     id: Annotated[int, Path(description="连接ID", ge=1)],
 ) -> JSONResponse:
@@ -97,7 +97,7 @@ async def test_db_connection_controller(
 
 @DbConsoleRouter.get("/{id}/databases", summary="查询库/schema 列表", response_model=ResponseSchema[list[DbObjectSchema]])
 async def list_db_databases_controller(
-    auth: Annotated[AuthSchema, Security(AuthPermission(["module_dbconsole:query:execute"]))],
+    auth: Annotated[AuthSchema, Security(AuthPermission(["module_ops:dbconsole:query:execute"]))],
     db: Annotated[AsyncSession, Depends(db_getter)],
     id: Annotated[int, Path(description="连接ID", ge=1)],
 ) -> JSONResponse:
@@ -107,7 +107,7 @@ async def list_db_databases_controller(
 
 @DbConsoleRouter.get("/{id}/tables", summary="查询表列表", response_model=ResponseSchema[list[DbObjectSchema]])
 async def list_db_tables_controller(
-    auth: Annotated[AuthSchema, Security(AuthPermission(["module_dbconsole:query:execute"]))],
+    auth: Annotated[AuthSchema, Security(AuthPermission(["module_ops:dbconsole:query:execute"]))],
     db: Annotated[AsyncSession, Depends(db_getter)],
     id: Annotated[int, Path(description="连接ID", ge=1)],
     database: Annotated[str | None, Query(max_length=128, description="库/schema 名")] = None,
@@ -118,7 +118,7 @@ async def list_db_tables_controller(
 
 @DbConsoleRouter.post("/{id}/query", summary="执行 SQL（只读校验；写需 confirmed）", response_model=ResponseSchema[DbQueryResultSchema])
 async def run_db_query_controller(
-    auth: Annotated[AuthSchema, Security(AuthPermission(["module_dbconsole:query:execute"]))],
+    auth: Annotated[AuthSchema, Security(AuthPermission(["module_ops:dbconsole:query:execute"]))],
     db: Annotated[AsyncSession, Depends(db_getter)],
     id: Annotated[int, Path(description="连接ID", ge=1)],
     data: Annotated[DbQuerySchema, Body(description="SQL 与确认标记")],

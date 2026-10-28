@@ -1,4 +1,5 @@
 import asyncio
+import re
 from collections.abc import Sequence
 
 from sqlalchemy import Inspector, inspect, select, text
@@ -393,7 +394,19 @@ class GenTableColumnCRUD(CRUDBase[GenTableColumnModel, GenTableColumnSchema, Gen
         for idx, column in enumerate(columns):
             # 获取列的基本信息
             column_name = column["name"]
-            column_type = str(column["type"])
+            sa_type = column["type"]
+            column_type = str(sa_type)
+            # PostgreSQL 的 ARRAY 反射后 str() 只剩 "ARRAY"，会丢掉元素类型；
+            # 生成模型时必须还原成 TEXT[]/INTEGER[] 这类形状，才能生成合法的 ARRAY(item_type)。
+            if str(database_type).lower() in {"postgres", "postgresql"} and getattr(sa_type, "item_type", None) is not None:
+                column_type = f"{sa_type.item_type}[]"
+            # MySQL 8 / SQLAlchemy 反射会在类型后附带 COLLATE/CHARACTER SET；
+            # 这些是库级属性，不属于代码生成器允许的类型形状，先剥离再校验。
+            if str(database_type).lower() in {"mysql", "mariadb"}:
+                column_type = re.sub(r'\s+COLLATE\s+(?:"[^"]+"|`[^`]+`|\S+)', "", column_type, flags=re.IGNORECASE)
+                column_type = re.sub(r'\s+CHARACTER\s+SET\s+\S+', "", column_type, flags=re.IGNORECASE)
+                column_type = re.sub(r'\s+CHARSET\s+\S+', "", column_type, flags=re.IGNORECASE)
+                column_type = column_type.strip()
             is_nullable = column.get("nullable", True)
             column_default = column.get("default", None)
             # 获取列注释（如果有的话）

@@ -13,7 +13,6 @@ import {
   StorageConfig,
   applyTheme,
   generateThemeColors,
-  toggleDarkMode,
   toggleSidebarColor,
 } from "@utils";
 import { defaultSettings } from "@/config/setting";
@@ -142,7 +141,6 @@ export const useSettingsStore = defineStore(
       [theme, themeColor],
       ([newTheme, newThemeColor]) => {
         try {
-          toggleDarkMode(newTheme === ThemeMode.DARK);
           const colors = generateThemeColors(newThemeColor, newTheme);
           applyTheme(colors);
         } catch (error) {
@@ -176,10 +174,12 @@ export const useSettingsStore = defineStore(
       menuOpenWidth.value = width;
     };
 
-    const setGlopTheme = (theme: SystemThemeEnum, themeMode: SystemThemeEnum) => {
-      systemThemeType.value = theme;
-      systemThemeMode.value = themeMode;
-      localStorage.setItem(StorageConfig.THEME_KEY, theme);
+    const setGlopTheme = (nextTheme: SystemThemeEnum, nextThemeMode: SystemThemeEnum) => {
+      systemThemeType.value = nextTheme;
+      systemThemeMode.value = nextThemeMode;
+      // 同步旧 theme 状态，避免刷新后旧持久化值把 html.dark 再次写回
+      theme.value = nextTheme === SystemThemeEnum.DARK ? ThemeMode.DARK : ThemeMode.LIGHT;
+      localStorage.setItem(StorageConfig.THEME_KEY, nextTheme);
     };
 
     const switchMenuStyles = (theme: MenuThemeEnum) => {

@@ -7,7 +7,7 @@
         <FaSidePanel :title="$t('common.db.databaseConnections')" class="db-side-panel">
           <template #actions>
             <ElButton
-              v-hasPerm="['module_dbconsole:conn:create']"
+              v-hasPerm="['module_ops:dbconsole:conn:create']"
               type="primary"
               size="small"
               :loading="createLoading"
@@ -128,7 +128,7 @@
                 </template>
               </ElDropdown>
               <ElButton
-                v-hasPerm="['module_dbconsole:query:execute']"
+                v-hasPerm="['module_ops:dbconsole:query:execute']"
                 type="primary"
                 :loading="running"
                 :disabled="!currentId"
@@ -247,7 +247,7 @@ import DbConsoleAPI, {
   type DbConnectionForm,
   type DbObject,
   type DbQueryResult,
-} from "@/api/module_dbconsole/connection";
+} from "@/api/module_ops/dbconsole/connection";
 import type { FormItem } from "@/components/forms/fa-form/index.vue";
 import FaForm from "@/components/forms/fa-form/index.vue";
 import type { ColumnOption } from "@/types/component";

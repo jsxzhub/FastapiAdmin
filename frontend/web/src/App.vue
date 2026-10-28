@@ -25,7 +25,6 @@ import en from "element-plus/es/locale/lang/en";
 import zhCn from "element-plus/es/locale/lang/zh-cn";
 import { router } from "@/router";
 import { ElNotification } from "element-plus";
-import { initIconifyAsync } from "./plugins/iconify";
 
 const appStore = useAppStore();
 const settingStore = useSettingsStore();
@@ -132,8 +131,6 @@ onMounted(() => {
   window.addEventListener("offline", handleOffline);
   window.addEventListener("online", handleOnline);
 
-  // 异步加载图标集，避免阻塞首屏
-  initIconifyAsync();
 });
 
 onUnmounted(() => {

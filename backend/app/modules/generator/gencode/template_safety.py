@@ -251,20 +251,31 @@ def vue_label(value: object) -> str:
     return html_escape(_VUE_LABEL_STRIP_RE.sub("", unescape_template_text(value)))
 
 
+# python_type 只允许这些真实类型名；不能复用 safe_ident，否则 int/float 会被
+# 当成 JS 保留字改写成 _int/_float，而生成文件里并没有对应导入，直接 ImportError。
+_PYTHON_TYPE_NAMES: frozenset[str] = frozenset(
+    {
+        "str", "int", "float", "bool", "bytes", "dict", "list", "tuple", "set",
+        "datetime", "date", "time", "timedelta", "Decimal", "Any",
+    }
+)
+
+
 def safe_python_type(value: object, default: str = "str") -> str:
     """把 ``python_type`` 规范为合法类型注解片段。
 
-    ``python_type`` 由表单提交且直接落在 ``Mapped[{{ column.python_type }}]`` 这类注解位置，
-    必须限定为标识符形态（如 ``str``/``int``/``datetime``/``Decimal``）。
+    ``python_type`` 会直接落在 ``Mapped[{{ column.python_type }}]`` 这类注解位置，
+    只能取白名单中的真实类型名，避免把自由文本注入代码。
 
     参数:
     - value (object): 原始值。
     - default (str): 兜底类型。
 
     返回:
-    - str: 合法标识符形式的类型名。
+    - str: 白名单内的类型名，或兜底类型。
     """
-    return safe_ident(value, default=default)
+    text = "" if value is None else str(value).strip()
+    return text if text in _PYTHON_TYPE_NAMES else default
 
 
 def assert_python_syntax(content: str, *, filename: str = "<generated>") -> None:
@@ -435,6 +446,15 @@ def pick_sqlalchemy_type(column_type: object, column_length: object = None, *, d
     from app.config.setting import settings  # 延迟导入避免模块级循环
 
     dialect = (db_type or settings.DATABASE_TYPE or "").lower()
+    text = normalize_column_type(column_type)
+    # PostgreSQL 数组：保留元素类型，生成 ARRAY(<item_type>)；裸 ARRAY 无元素信息时用 String 兜底
+    if text.endswith("[]") or text.upper().startswith("ARRAY["):
+        item_text = text[:-2].strip() if text.endswith("[]") else text[text.find("[") + 1 : text.rfind("]")].strip()
+        item_sa = pick_sqlalchemy_type(item_text, None, db_type=dialect) if item_text else "String"
+        if not item_sa or item_sa == "ARRAY":
+            item_sa = "String"
+        return f"ARRAY({item_sa})"
+
     base = column_type_base(column_type)
     params = extract_type_params(column_type, column_length)
     lowered = base.lower()

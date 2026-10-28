@@ -48,14 +48,6 @@
     >
       点击顶部标签左侧 ☆ 收藏常用页面
     </div>
-
-    <FaEmptyState
-      v-else
-      class="absolute inset-0 flex items-center justify-center"
-      icon="ri:link"
-      title="暂无链接"
-      compact
-    />
   </div>
 </template>
 
