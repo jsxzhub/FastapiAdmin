@@ -23,11 +23,22 @@ from fastapi.testclient import TestClient
 # 测试环境变量
 # ============================================================
 
+# 测试库类型：默认 sqlite（开箱即跑）；设置 TEST_DB_TYPE=postgres 可切到真实 PostgreSQL
+# ——SQLite 与 PG 在类型/约束/迁移上的行为并不一致，涉及迁移或数据库特有语义时请在 PG 上验。
+_TEST_DB_TYPE = os.getenv("TEST_DB_TYPE", "sqlite").lower()
 _TEST_DB_PATH = tempfile.NamedTemporaryFile(suffix=".db", delete=False).name
 
-os.environ["ENVIRONMENT"] = "dev"  # 测试固定 dev，避免加载 .env.prod / 启用生产中间件
-os.environ["DATABASE_TYPE"] = "sqlite"
-os.environ["DATABASE_NAME"] = _TEST_DB_PATH
+if _TEST_DB_TYPE == "postgres":
+    os.environ["DATABASE_TYPE"] = "postgres"
+    os.environ["DATABASE_HOST"] = os.getenv("TEST_DB_HOST", "127.0.0.1")
+    os.environ["DATABASE_PORT"] = os.getenv("TEST_DB_PORT", "5432")
+    os.environ["DATABASE_USER"] = os.getenv("TEST_DB_USER", "fastapiadmin")
+    os.environ["DATABASE_PASSWORD"] = os.getenv("TEST_DB_PASSWORD", "")
+    os.environ["DATABASE_NAME"] = os.getenv("TEST_DB_NAME", "fastapiadmin_test")
+else:
+    os.environ["DATABASE_TYPE"] = "sqlite"
+    os.environ["DATABASE_NAME"] = _TEST_DB_PATH
+
 os.environ["POOL_SIZE"] = "1"
 os.environ["MAX_OVERFLOW"] = "1"
 os.environ["SECRET_KEY"] = "unit-test-secret-key-not-a-real-secret"  # Settings 必填项，固定注入保证测试确定性
@@ -40,8 +51,15 @@ _versions_before_layout: frozenset[str] = frozenset(p.name for p in ALEMBIC_VERS
 
 from app.config.setting import settings
 
-settings.DATABASE_TYPE = "sqlite"
-settings.DATABASE_NAME = _TEST_DB_PATH
+settings.DATABASE_TYPE = _TEST_DB_TYPE
+if _TEST_DB_TYPE == "postgres":
+    settings.DATABASE_HOST = os.environ["DATABASE_HOST"]
+    settings.DATABASE_PORT = int(os.environ["DATABASE_PORT"])
+    settings.DATABASE_USER = os.environ["DATABASE_USER"]
+    settings.DATABASE_PASSWORD = os.environ["DATABASE_PASSWORD"]
+    settings.DATABASE_NAME = os.environ["DATABASE_NAME"]
+else:
+    settings.DATABASE_NAME = _TEST_DB_PATH
 settings.POOL_SIZE = 1
 settings.MAX_OVERFLOW = 1
 settings.CAPTCHA_ENABLE = False  # 测试环境关闭验证码
@@ -161,8 +179,7 @@ _mock_redis.dbsize = AsyncMock(side_effect=_redis_dbsize)
 
 patch("redis.asyncio.Redis.from_url", return_value=_mock_redis).start()
 # slowapi 限流器由中间件处理，测试中无需 mock
-patch("app.core.ap_scheduler.SchedulerUtil.init_scheduler", new=AsyncMock()).start()
-patch("app.core.ap_scheduler.SchedulerUtil.shutdown", new=AsyncMock()).start()
+# 调度器 init/shutdown 不再全局 mock：由 isolated 生命周期测试自行启动/关闭
 
 # slowapi 通过中间件限流，测试无需 mock
 

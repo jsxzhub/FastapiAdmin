@@ -193,7 +193,8 @@ const props = withDefaults(defineProps<Props>(), {
   items: () => [],
   data: null,
   span: 2,
-  scrollbar: true,
+  // 统一由弹窗/页面外层滚动，详情组件内不再套第二层滚动条
+  scrollbar: false,
   maxHeight: "70vh",
 });
 
@@ -220,5 +221,17 @@ const contentProps = computed(() => ({
 <style scoped>
 :deep(.fa-descriptions) {
   width: 100%;
+}
+
+/* 详情值允许长路径/URL/JSON 在单元格内换行，避免撑破表格或横向溢出 */
+:deep(.el-descriptions__cell) {
+  vertical-align: top;
+}
+
+:deep(.el-descriptions__content) {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 </style>

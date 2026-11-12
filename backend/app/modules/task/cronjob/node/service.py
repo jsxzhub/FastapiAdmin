@@ -1,4 +1,5 @@
 import json
+import uuid
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -15,7 +16,7 @@ from app.core.ap_scheduler import SchedulerUtil, scheduler
 from app.core.base_schema import AuthSchema, PageResultSchema
 from app.core.exceptions import CustomException
 from app.core.logger import logger
-from app.core.validator import datetime_validator
+from app.core.validator import datetime_validator, to_local_datetime
 from app.utils.common_util import search_to_dict
 
 from .crud import NodeCRUD
@@ -85,6 +86,9 @@ class NodeService:
             raise CustomException(msg="创建失败，该节点已存在")
 
         _validate_node_plan(data.trigger, data.trigger_args)
+        if not data.code:
+            # code 是模型必填且唯一；未填写时生成稳定可读的任务编码
+            data.code = f"job_{uuid.uuid4().hex[:12]}"
         obj = await NodeCRUD(self.auth, self.db).create_obj_crud(data=data)
         if not obj:
             raise CustomException(msg="创建失败")
@@ -197,7 +201,7 @@ class NodeService:
             )
             row = (await self.db.execute(stmt)).scalars().first()
             if row:
-                item.last_run_time = row.created_time.isoformat() if row.created_time else None
+                item.last_run_time = (to_local_datetime(row.created_time).strftime("%Y-%m-%d %H:%M:%S") if row.created_time and to_local_datetime(row.created_time) else None)
                 item.last_run_status = row.status
 
 

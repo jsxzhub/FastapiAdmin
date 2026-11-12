@@ -192,7 +192,6 @@
           :column="4"
           :data="detailFormData"
           :items="userDetailItems"
-          :scrollbar="false"
         >
           <!-- 头像 → 自定义渲染 -->
           <template #avatar="{ row }">
@@ -851,8 +850,8 @@ const rules = reactive({
   username: [
     { required: true, message: "请输入账号", trigger: "blur" },
     {
-      pattern: /^[a-zA-Z][a-zA-Z0-9_.-]{1,31}$/,
-      message: "账号需以字母开头，2-32位字母/数字/_.-",
+      pattern: /^[a-zA-Z][a-zA-Z0-9_.-]{2,31}$/,
+      message: "账号需以字母开头，3-32位字母/数字/_.-",
       trigger: "blur",
     },
   ],

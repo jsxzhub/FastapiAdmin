@@ -137,8 +137,8 @@ class UserService:
 
         update_data = data.model_dump(exclude_unset=True, exclude_none=True, exclude={"role_ids", "position_ids"})
         await UserCRUD(self.auth, self.db).update(id=id, data=update_data)
-        await self._set_user_roles(user_ids=[id], role_ids=data.role_ids or [])
-        await self._set_user_positions(user_ids=[id], position_ids=data.position_ids or [])
+        await self._set_user_roles(user_ids=[id], role_ids=data.role_ids or [], clear_when_empty=True)
+        await self._set_user_positions(user_ids=[id], position_ids=data.position_ids or [], clear_when_empty=True)
 
         return await self.detail(id=id)
 
@@ -177,9 +177,12 @@ class UserService:
             raise CustomException(msg=f"用户不存在: {missing}")
         return users
 
-    async def _set_user_roles(self, user_ids: list[int], role_ids: list[int]) -> None:
+    async def _set_user_roles(self, user_ids: list[int], role_ids: list[int], clear_when_empty: bool = False) -> None:
         """替换用户角色关联：service 校验角色存在性与启用状态，CRUD 仅负责持久化。"""
         if not role_ids:
+            if clear_when_empty:
+                users = await self._load_users(user_ids, preload=["roles"])
+                await UserCRUD(self.auth, self.db).set_user_roles(user_objs=users, role_objs=[])
             return
         users = await self._load_users(user_ids, preload=["roles"])
         roles = await RoleCRUD(self.auth, self.db).get_list(search={"id": ("in", role_ids)})
@@ -190,9 +193,12 @@ class UserService:
             raise CustomException(msg="部分角色已被禁用")
         await UserCRUD(self.auth, self.db).set_user_roles(user_objs=users, role_objs=roles)
 
-    async def _set_user_positions(self, user_ids: list[int], position_ids: list[int]) -> None:
+    async def _set_user_positions(self, user_ids: list[int], position_ids: list[int], clear_when_empty: bool = False) -> None:
         """替换用户岗位关联：service 校验岗位存在性与启用状态，CRUD 仅负责持久化。"""
         if not position_ids:
+            if clear_when_empty:
+                users = await self._load_users(user_ids, preload=["positions"])
+                await UserCRUD(self.auth, self.db).set_user_positions(user_objs=users, position_objs=[])
             return
         users = await self._load_users(user_ids, preload=["positions"])
         positions = await PositionCRUD(self.auth, self.db).get_list(search={"id": ("in", position_ids)})
@@ -326,6 +332,15 @@ class UserService:
         logger.info(f"新用户注册成功: {data.username}")
         return await self.detail(id=new_user.id)
 
+    @staticmethod
+    def _import_gender(value: Any) -> str:
+        """导入模板使用中文性别，落库统一为 0/1/2。"""
+        if value is None:
+            return "1"
+        raw = str(value).strip()
+        return {"男": "0", "女": "1", "未知": "2"}.get(raw, raw)
+
+
     async def batch_import(self, file: UploadFile, update_support: bool = False) -> str:
         header_dict = {
             "部门编号": "dept_id",
@@ -339,8 +354,13 @@ class UserService:
 
         try:
             contents = await file.read()
-            rows = await ExcelUtil.aread_excel_to_dicts(contents)
             await file.close()
+            try:
+                rows = await ExcelUtil.aread_excel_to_dicts(contents)
+            except CustomException:
+                raise
+            except Exception as exc:
+                raise CustomException(msg="导入文件格式错误，请使用下载的模板") from exc
 
             if not rows:
                 raise CustomException(msg="导入文件为空")
@@ -422,7 +442,7 @@ class UserService:
                 "name": name,
                 "email": str(row["email"]).strip() if row.get("email") is not None else None,
                 "mobile": str(row["mobile"]).strip() if row.get("mobile") is not None else None,
-                "gender": str(row["gender"]).strip() if row.get("gender") is not None else "1",
+                "gender": self._import_gender(row.get("gender")),
                 "status": 0 if str(row["status"]).strip() == "正常" else 1,
                 "dept_id": dept_id,
                 "password": await PwdUtil.ahash_password(password=settings.PASSWORD_IMPORT_DEFAULT),

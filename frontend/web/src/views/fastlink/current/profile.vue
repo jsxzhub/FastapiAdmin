@@ -245,6 +245,7 @@
             :data="currentSessions"
             stripe
             table-layout="fixed"
+            max-height="240"
             class="w-full p-4"
             size="small"
           >
